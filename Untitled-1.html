@@ -1,0 +1,4336 @@
+
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Card Game</title>
+
+
+
+  <style>
+
+
+/* video fills the container like background cover */
+
+
+/* IMPORTANT: allow body to be taller than 100vh so the video can scroll */
+body{
+  position: relative;
+  min-height: 3000px;   /* ✅ make sure page height matches your 1080x3000 vibe */
+}
+
+    html, body { height: 100%; }
+
+body{
+  margin:0;
+  padding:0;
+  overflow-x:hidden;
+  background:#000; /* fallback if video not loading */
+}
+
+
+
+
+    html, body {
+  height: 100%;
+}
+
+body {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+/* video background same as background-image cover */
+
+
+
+
+    /* Full background video that scrolls up/down with the page */
+#bgVideo{
+  position: absolute;   /* <-- important: scrolls with page */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  z-index: -1;
+}
+
+/* Make sure the page has a "background area" to fill */
+body{
+  position: relative;
+  min-height: 100vh;
+}
+
+    #earthViewer{
+  position:fixed;
+  inset:0;
+  z-index:25000;
+  background:#000000;
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
+#earthViewer.active{ display:flex; }
+
+/* ✅ MAKE VIDEO FULL SCREEN */
+#earthViewer video{
+  width:100%;
+  height:100%;
+  object-fit:cover;   /* fills screen like background, crops a bit if needed */
+  display:block;
+}
+#earth_day_night_10s{
+  pointer-events: auto !important;
+  cursor: pointer;
+  position: relative;
+  z-index: 9999;
+}
+
+    /* =========================
+   WEEK GIFS STRIP (7 GIFS)
+========================= */
+.week-gifs-strip{
+  width: 100%;
+  margin: 25px 0 10px 0;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap: 20px;
+  flex-wrap: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+#earthGif{
+  width:100%;
+  height:auto;
+  display:block;
+  cursor:pointer;
+}
+
+
+/* each gif item */
+.week-gif{
+  width: 130px;
+  height: auto;
+  object-fit: contain;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+  user-select:none;
+  -webkit-user-drag:none;
+  pointer-events:none;
+  opacity: 1;
+}
+#earthGif{
+  pointer-events:auto;
+  z-index: 5;
+}
+
+
+/* ✅ MIDDLE IS 100% BIGGER = 2X */
+.week-gif.mid{
+  transform: scale(2);
+  opacity: 1;
+}
+
+/* fade levels from middle -> far edges */
+.week-gif.fade-1{ opacity: 0.75; }  /* near to center */
+.week-gif.fade-2{ opacity: 0.40; }  /* further */
+.week-gif.fade-3{ opacity: 0.00; }  /* far left/right = invisible */
+
+/* keep strip responsive */
+@media(max-width:900px){
+  .week-gif{ width: 100px; }
+  .week-gif.mid{ transform: scale(2); }
+}
+
+@media(max-width:600px){
+  .week-gif{ width: 85px; }
+  .week-gif.mid{ transform: scale(2); }
+}
+
+    /* =========================
+   WEEKDAY GIF STRIP (7 GIFs)
+   Center = today
+   3 left + 3 right
+   Opacity: center 1 -> edges 0
+========================= */
+.weekday-strip{
+  width: min(980px, 92vw);
+  margin: 18px auto 10px auto;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap: 14px;
+  position: relative;
+  z-index: 12;
+  user-select:none;
+}
+
+.weekday-strip .day-gif{
+  height: 96px;
+  width: auto;
+  object-fit: contain;
+  border-radius: 14px;
+  background: transparent;
+  box-shadow: 0 14px 36px rgba(0,0,0,.35);
+  transform: translateZ(0);
+  transition: opacity .25s ease, transform .25s ease, filter .25s ease;
+ pointer-events: auto;
+  cursor: pointer;
+}
+
+/* optional: make the center pop a bit */
+.weekday-strip .day-gif.is-center{
+  transform: scale(1.06);
+  filter: brightness(1.08) saturate(1.08);
+}
+
+/* small on mobile */
+@media (max-width:600px){
+  .weekday-strip .day-gif{ height: 70px; }
+}
+
+html, body { height: 100%; }
+
+body{
+  position: relative;
+  margin: 0;
+  padding: 0;
+  overflow-x: hidden;
+}
+
+
+
+
+    /* NEW: Animated Cards Flow Styles */
+    :root{
+      --cardH: 175px;
+      --gap: 28px;
+      --edgeZone: 25%;
+      --edgeOpacity: 0.20;
+      --glowBlue: rgba(0, 217, 255, 0.95);
+      --glowBlueSoft: rgba(0, 217, 255, 0.38);
+      --glowPink: rgba(255, 72, 196, 0.92);
+      --glowPinkSoft: rgba(255, 72, 196, 0.35);
+    }
+
+    /* GIF background for animated cards */
+    .cards-bg{
+      position:fixed; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      z-index:-10;
+      transform: scale(1.02);
+      display: none;
+    }
+
+    /* LANES LAYOUT: Top, Middle, Bottom - FIXED POSITIONING */
+    .lanes{
+      position:fixed;
+      inset:0;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      padding: 22px 0;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 900ms ease;
+      z-index:25001;
+      overflow: visible;
+      display: none;
+    }
+    
+    body.show-cards-lanes .lanes{
+      opacity:1;
+      pointer-events:auto;
+      display: flex;
+    }
+
+    /* TOP LANE - Positioned at top */
+    .lane-top {
+      height: var(--cardH);
+      position: relative;
+      overflow: hidden;
+      margin-top: 20px;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 15%,
+        rgba(0,0,0,1) 85%,
+        rgba(0,0,0,0.2) 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 15%,
+        rgba(0,0,0,1) 85%,
+        rgba(0,0,0,0.2) 100%
+      );
+    }
+    
+    /* MIDDLE LANE - Positioned in center */
+    .lane-middle {
+      height: var(--cardH);
+      position: relative;
+      overflow: hidden;
+      align-self: center;
+      width: 80%;
+      margin: 20px 0;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 10%,
+        rgba(0,0,0,1) 90%,
+        rgba(0,0,0,0.2) 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 10%,
+        rgba(0,0,0,1) 90%,
+        rgba(0,0,0,0.2) 100%
+      );
+    }
+    
+    /* BOTTOM LANE - Positioned at bottom */
+    .lane-bottom {
+      height: var(--cardH);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 20px;
+      -webkit-mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 15%,
+        rgba(0,0,0,1) 85%,
+        rgba(0,0,0,0.2) 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        rgba(0,0,0,0.2) 0%,
+        rgba(0,0,0,1) 15%,
+        rgba(0,0,0,1) 85%,
+        rgba(0,0,0,0.2) 100%
+      );
+    }
+
+    .track{
+      height:100%;
+      display:flex;
+      align-items:center;
+      gap: var(--gap);
+      width:max-content;
+      will-change: transform;
+      padding: 0 22px;
+      overflow: visible;
+      position: relative;
+      z-index: 1;
+    }
+
+    /* Card for animated flow */
+    .flow-card{
+      height: var(--cardH);
+      flex:0 0 auto;
+      border-radius: 16px;
+      overflow: visible;
+      position:relative;
+      cursor:pointer;
+      user-select:none;
+      -webkit-user-drag:none;
+      transform: translateZ(0);
+      transition:
+        transform 240ms cubic-bezier(.2,.9,.2,1),
+        filter 240ms ease,
+        box-shadow 240ms ease;
+      background: transparent;
+      box-shadow:
+        0 10px 28px rgba(0,0,0,0.30),
+        0 0 10px rgba(255,255,255,0.08);
+      z-index: 1;
+    }
+
+    .flow-card img{
+      display:block;
+      height:100%;
+      width:auto;
+      object-fit:contain;
+      background: transparent;
+      pointer-events:none;
+      user-select:none;
+      -webkit-user-drag:none;
+    }
+
+    /* border */
+    .flow-card::before{
+      content:"";
+      position:absolute; inset:0;
+      border-radius:16px;
+      padding:2px;
+      background: linear-gradient(135deg, rgba(0,217,255,0.0), rgba(255,72,196,0.0));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity:0;
+      transition: opacity 220ms ease, background 220ms ease;
+      pointer-events:none;
+    }
+
+    /* hover */
+    .flow-card:hover{
+      transform: translateY(-8px) scale(1.04);
+      filter: brightness(1.05) saturate(1.10);
+      box-shadow:
+        0 18px 44px rgba(0,0,0,0.38),
+        0 0 16px rgba(0,217,255,0.18),
+        0 0 16px rgba(255,72,196,0.16);
+      z-index: 20;
+    }
+    .flow-card:hover::before{
+      opacity:0.75;
+      background: linear-gradient(135deg, var(--glowBlueSoft), var(--glowPinkSoft));
+    }
+
+    /* CLICK "pop" effect */
+    .flow-card.pop{
+      filter: brightness(1.10) saturate(1.18);
+      box-shadow:
+        0 22px 60px rgba(0,0,0,0.40),
+        0 0 18px var(--glowBlue),
+        0 0 36px var(--glowBlueSoft),
+        0 0 18px var(--glowPink),
+        0 0 44px var(--glowPinkSoft);
+    }
+    .flow-card.pop::before{
+      opacity:1;
+      background: linear-gradient(135deg, var(--glowBlue), var(--glowPink));
+    }
+
+    /* motion */
+    @keyframes moveRTL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes moveLTR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+    .rtl{ animation: moveRTL linear infinite; }
+    .ltr{ animation: moveLTR linear infinite; }
+
+    .cards-hint{
+      position:fixed;
+      left:18px;
+      bottom:14px;
+      z-index:25002;
+      color:rgba(255,255,255,0.92);
+      font-size:12px;
+      letter-spacing:0.35px;
+      text-shadow: 0 3px 18px rgba(0,0,0,0.65);
+      pointer-events:none;
+      display: none;
+    }
+
+    /* ===== MODAL FOR ANIMATED CARDS ===== */
+    .cards-modal{
+      position:fixed; inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      z-index:999999;
+      opacity:0;
+      pointer-events:none;
+      transition: opacity 180ms ease;
+    }
+    .cards-modal.open{
+      opacity:1;
+      pointer-events:auto;
+    }
+
+    /* darken whole screen except card (70%) */
+    .cards-modal .backdrop{
+      position:absolute; inset:0;
+      background: rgba(0,0,0,0.70);
+    }
+
+    /* centered card container */
+    .cards-modal .center{
+      position:relative;
+      z-index:2;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      width:min(92vw, 520px);
+      height:auto;
+      padding: 10px;
+    }
+
+    /* the card shown in the middle (same size as original card) */
+    .cards-modal-card{
+      height: var(--cardH);
+      width:auto;
+      border-radius: 16px;
+      overflow: visible;
+      position:relative;
+      cursor:pointer;
+      transform: scale(0.92);
+      opacity:0;
+      transition: transform 220ms cubic-bezier(.2,.9,.2,1), opacity 220ms ease;
+      box-shadow:
+        0 26px 90px rgba(0,0,0,0.75),
+        0 0 22px var(--glowBlue),
+        0 0 44px var(--glowBlueSoft),
+        0 0 22px var(--glowPink),
+        0 0 54px var(--glowPinkSoft);
+    }
+    .cards-modal.open .cards-modal-card{
+      transform: scale(1);
+      opacity:1;
+    }
+
+    .cards-modal-card img{
+      display:block;
+      height:100%;
+      width:auto;
+      object-fit:contain;
+      border-radius: 16px;
+      user-select:none;
+      -webkit-user-drag:none;
+      pointer-events:none;
+      background: transparent;
+    }
+
+    .cards-modal-card::before{
+      content:"";
+      position:absolute; inset:0;
+      border-radius:16px;
+      padding:2px;
+      background: linear-gradient(135deg, var(--glowBlue), var(--glowPink));
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity:1;
+      pointer-events:none;
+    }
+
+    @media (prefers-reduced-motion: reduce){
+      .rtl,.ltr{ animation:none !important; }
+      .cards-modal-card{ transition:none; transform:none; opacity:1; }
+      .cards-modal{ transition:none; }
+    }
+
+    /* Original styles continue below... */
+    .circle-button{
+      margin-top:10px;
+      width:40px;height:40px;
+      background-color:#fff;
+      border-radius:50%;
+      border:2px solid #fff;
+      box-shadow:0 0 10px rgba(255,255,255,.7);
+      cursor:pointer;
+      transition:transform .2s ease;
+    }
+    .circle-button:hover{transform:scale(1.1)}
+    .black-image{filter:grayscale(100%);opacity:.8}
+
+    .landing-overlay{
+      position:fixed;top:0;left:0;
+      width:100%;height:100%;
+      background-color:rgba(0,0,0,.95);
+      z-index:9999;
+      display:flex;
+      flex-direction:column;
+      justify-content:center;
+      align-items:center;
+      color:#fff;
+      text-align:center;
+    }
+    .landing-button{
+      margin:20px;
+      padding:20px 40px;
+      font-size:24px;
+      color:#fff;
+      background:transparent;
+      border:2px solid #fff;
+      cursor:pointer;
+      transition:all .3s ease-in-out;
+    }
+    .landing-button:hover{background:#fff;color:#000}
+
+    .language-selector{
+      display:flex;
+      justify-content:center;
+      margin:20px 0;
+      flex-wrap:wrap;
+      gap:10px;
+      padding:0 12px;
+      position:relative;
+      z-index:20;
+    }
+    .language-selector button{
+      padding:10px 20px;
+      border:none;
+      background:#fff;
+      cursor:pointer;
+      transition:transform .3s ease;
+    }
+    .language-selector button:hover{transform:scale(1.1)}
+
+  .background-gif{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:-1;
+  overflow:hidden;
+}
+#bgVideo{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  display:block;
+}
+
+
+    .container{
+      padding:40px 80px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      text-align:center;
+      position:relative;
+      z-index:10;
+    }
+    h1{
+      font-family:"Playfair Display",serif;
+      font-size:36px;
+      font-weight:700;
+      color:#fff;
+      text-shadow:rgba(0,0,0,.5) 0 10px 10px;
+    }
+    p{font-size:18px;color:#fff;line-height:1.5em}
+
+    .card-row{display:flex;flex-direction:column;align-items:center;margin:20px 0}
+    .card-wrap{
+      margin:10px;
+      perspective:800px;
+      transform-style:preserve-3d;
+      cursor:pointer;
+    }
+    .card-wrap:hover .card-info{transform:translateY(0)}
+    .card-wrap:hover .card-info p{opacity:1}
+    .card-wrap:hover .card-info,
+    .card-wrap:hover .card-info p{transition:.6s cubic-bezier(.23,1,.32,1)}
+    .card-wrap:hover .card-bg{opacity:.8}
+
+    .card{
+      position:relative;
+      flex:0 0 240px;
+      width:240px;height:420px;
+      background-size:cover;
+      background-position:center;
+      overflow:hidden;
+      border-radius:10px;
+      box-shadow:rgba(0,0,0,.66) 0 30px 60px 0,
+                 inset #333 0 0 0 5px,
+                 inset rgba(255,255,255,.5) 0 0 0 6px;
+      transition:1s cubic-bezier(.445,.05,.55,.95);
+      transform-style:preserve-3d;
+    }
+    .card-bg{
+      position:absolute;top:0;left:0;
+      width:100%;height:100%;
+      background-repeat:no-repeat;
+      background-position:center;
+      background-size:cover;
+      pointer-events:none;
+    }
+    .card-info{
+      padding:20px;
+      position:absolute;
+      bottom:0;
+      color:#fff;
+      transform:translateY(40%);
+      transition:.6s 1.6s cubic-bezier(.215,.61,.355,1);
+    }
+    .card-info p{
+      opacity:0;
+      text-shadow:#000 0 2px 3px;
+      transition:.6s 1.6s cubic-bezier(.215,.61,.355,1);
+    }
+    .card-info *{position:relative;z-index:1}
+    .card-info:after{
+      content:"";
+      position:absolute;top:0;left:0;
+      z-index:0;
+      width:100%;height:100%;
+      background-image:linear-gradient(to bottom,transparent 0%,rgba(0,0,0,.6) 100%);
+      background-blend-mode:overlay;
+      opacity:0;
+      transform:translateY(100%);
+      transition:5s 1s cubic-bezier(.445,.05,.55,.95);
+    }
+
+    /* Side tapes */
+    .scroll-tape{
+      position:fixed;
+      top:0;bottom:0;
+      width:220px;
+      overflow-y:auto;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      padding:28px 0;
+      scrollbar-width:none;
+      -ms-overflow-style:none;
+      z-index:500;
+    }
+    .scroll-tape::-webkit-scrollbar{display:none}
+    .scroll-tape img{
+      width:180px;height:180px;
+      object-fit:contain;
+      margin:18px 0;
+      cursor:pointer;
+      border:none;
+      border-radius:0;
+      background:transparent;
+      box-shadow:none;
+      padding:0;
+      transition:transform .25s ease;
+      display:block;
+    }
+    .scroll-tape img:hover{transform:scale(1.06)}
+
+    .left-tape{
+      left:0;
+      background:linear-gradient(to right,rgba(0,0,0,.75),rgba(0,0,0,0));
+    }
+    .right-tape{
+      right:0;
+      background:linear-gradient(to left,rgba(0,0,0,.75),rgba(0,0,0,0));
+    }
+
+    .modal{
+      display:none;
+      position:fixed;
+      top:50%;left:50%;
+      transform:translate(-50%,-50%);
+      width:min(600px,92vw);
+      background:rgba(0,0,0,.86);
+      color:#fff;
+      padding:20px;
+      border-radius:15px;
+      box-shadow:0 5px 15px rgba(0,0,0,.5);
+      z-index:1000;
+      text-align:center;
+    }
+    .overlay{
+      display:none;
+      position:fixed;
+      top:0;left:0;
+      width:100%;height:100%;
+      background:rgba(0,0,0,.5);
+      z-index:999;
+    }
+
+    /* =========================
+       3D CARD CREATOR SECTION
+    ========================= */
+    .card-creator-section {
+      width: 100%;
+      max-width: 1200px;
+      margin: 60px auto;
+      padding: 40px;
+      background: rgba(0, 0, 0, 0.7);
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .card-creator-section h2 {
+      color: #fff;
+      font-family: "Playfair Display", serif;
+      font-size: 32px;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+    }
+
+    .card-creator-section p {
+      color: #ccc;
+      font-size: 16px;
+      margin-bottom: 30px;
+    }
+
+    .creator-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 40px;
+      justify-content: center;
+      align-items: flex-start;
+    }
+
+    .upload-area {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      background: rgba(30, 30, 30, 0.8);
+      padding: 30px;
+      border-radius: 15px;
+      border: 2px dashed rgba(255, 255, 255, 0.2);
+    }
+
+    .upload-box {
+      width: 100%;
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      border: 2px dashed rgba(255, 255,255, 0.3);
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      margin-bottom: 20px;
+      background: rgba(20, 20, 20, 0.5);
+    }
+
+    .upload-box:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+      background: rgba(30, 30, 30, 0.7);
+    }
+
+    .upload-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: none;
+    }
+
+    .upload-box span {
+      color: #aaa;
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .upload-input {
+      display: none;
+    }
+
+    .upload-label {
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      display: inline-block;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .upload-label:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .preview-area {
+      flex: 1;
+      min-width: 300px;
+      max-width: 400px;
+      display: flex;
+      flex-direction:column;
+      align-items:center;
+    }
+
+    .preview-card-wrap {
+      perspective: 1000px;
+      width: 240px;
+      height: 420px;
+      cursor: pointer;
+      margin-bottom: 30px;
+    }
+
+    .preview-card {
+      width: 100%;
+      height: 100%;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      border-radius: 10px;
+      box-shadow: rgba(0, 0, 0, 0.66) 0 30px 60px 0,
+                 inset #333 0 0 0 5px,
+                 inset rgba(255, 255, 255, 0.5) 0 0 0 6px;
+    }
+
+    .preview-card.flipped {
+      transform: rotateY(180deg);
+    }
+
+    .card-face {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      overflow: hidden;
+      background-size: cover;
+      background-position: center;
+    }
+
+    .card-front {
+      background-color: #2a2a2a;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .card-back {
+      background-color: #1a1a1a;
+      transform: rotateY(180deg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+      font-size: 18px;
+    }
+
+    .card-front img,
+    .card-back img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .preview-controls {
+      display: flex;
+      gap: 20px;
+      margin-top: 20px;
+    }
+
+    .preview-btn {
+      padding: 12px 24px;
+      background: rgba(255, 255, 255, 0.1);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-family: "Raleway", sans-serif;
+      font-size: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .preview-btn:hover {
+      background: rgba(255, 255, 255, 0.2);
+      transform: translateY(-2px);
+    }
+
+    .preview-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .instructions {
+      margin-top: 30px;
+      padding: 20px;
+      background: rgba(30, 30, 30, 0.6);
+      border-radius: 10px;
+      border-left: 4px solid rgba(255, 255, 255, 0.3);
+    }
+
+    .instructions h3 {
+      color: #fff;
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .instructions ul {
+      color: #ccc;
+      padding-left: 20px;
+      text-align: left;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .instructions li {
+      margin-bottom: 8px;
+    }
+
+    .video-section-bottom{
+      position:relative;
+      display:flex;
+      justify-content:center;
+      align-items:center;
+      padding:40px 0;
+      background:rgba(0,0,0,.5);
+      z-index:10;
+    }
+    .video-wrapper{
+      display:flex;
+      gap:40px;
+      justify-content:center;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .video-box iframe{border-radius:10px}
+
+    @media (max-width:900px){
+      .container{padding:30px 12px}
+      .scroll-tape{width:140px}
+      .scroll-tape img{width:110px;height:110px}
+      .creator-container {
+        flex-direction: column;
+        align-items: center;
+      }
+      .upload-area, .preview-area {
+        max-width: 100%;
+      }
+    }
+
+    .card-back{
+      position:absolute;top:0;left:0;
+      width:100%;height:100%;
+      background:#000;
+      backface-visibility:hidden;
+      transform:rotateY(180deg);
+      background-size:cover;
+      background-position:center;
+    }
+
+    /* =========================
+       TOP-LEFT "BACK" BUTTON
+       - ALWAYS visible
+       - NO ALPHA HIT - ENTIRE AREA CLICKABLE
+    ========================= */
+    #mapToggleBtn{
+      position:fixed;
+      top:12px;
+      left:12px;
+      z-index:1000001;
+      width:64px;height:64px;
+      border-radius:999px;
+      overflow:hidden;
+      cursor:pointer;
+      background:transparent;
+      border:2px solid rgba(255,255,255,.9);
+      box-shadow:0 0 14px rgba(255,255,255,.55);
+      transition:transform .2s ease;
+      display:block; /* ALWAYS */
+    }
+    
+    #mapToggleBtn:hover{transform:scale(1.05)}
+    #mapToggleBtn img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* =========================
+       MAP DRAWER
+    ========================= */
+    #mapDrawerOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.20); /* only 20% darker */
+      z-index:10000;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity .25s ease;
+    }
+    #mapDrawer{
+      position:fixed;
+      top:0;right:0;
+      width:100vw;height:100vh;
+      z-index:10002;
+      transform:translateX(100%);
+      transition:transform .35s ease;
+      background:rgba(0,0,0,.95);
+      box-shadow:-30px 0 60px rgba(255,255,255,.25);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:0;
+      pointer-events:auto;
+      overflow:hidden;
+    }
+
+    .gif-base{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      z-index:1;
+      pointer-events:none;
+      user-select:none;
+      transform:translateZ(0);
+      will-change:transform;
+    }
+    .area-show,
+    .area-glow{
+      position:absolute;
+      inset:0;
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      opacity:0;
+      pointer-events:none;
+      user-select:none;
+      transform:translateZ(0);
+      will-change:opacity;
+      transition:opacity .04s linear;
+    }
+    .area-show{ z-index:10; }
+    .area-glow{ z-index:11; }
+    .active{ opacity:1; }
+
+    .map-open #mapDrawerOverlay{
+      opacity:1;
+      pointer-events:none; /* can't click to close */
+    }
+    .map-open #mapDrawer{transform:translateX(0)}
+    .map-open{overflow:hidden}
+
+    #mapStage{
+      position:absolute;
+      inset:0;
+      transform:translate3d(0,0,0) scale(1);
+      transform-origin:center center;
+      transition:transform .28s ease;
+      will-change:transform;
+    }
+    .zoomed #mapDrawer{ cursor:default; }
+
+    /* =========================
+       LAND OVERLAY (opens after zoom, auto)
+       - opens automatically after 1s
+       - fade in 1s (opacity 0 -> 1)
+       - only 20% darker
+       - NOT closable by click, only by top-left back
+       - ADD: white-box hover bump + glow + click
+    ========================= */
+    #landOverlay{
+      position:fixed;
+      inset:0;
+      z-index:20000;
+      background:rgba(0,0,0,.20);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 1s ease;
+    }
+    #landOverlay.active{
+      opacity:1;
+      pointer-events:auto; /* blocks clicks to map */
+    }
+    #landOverlayContent{
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      transform:translateZ(0);
+      will-change:transform, filter;
+      transition:transform .18s ease, filter .18s ease;
+    }
+    #landOverlay img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* highlight for the white box area (computed from pixels) */
+    #whiteBoxHighlight{
+      position:absolute;
+      border:2px solid rgba(255,255,255,.95);
+      box-shadow:0 0 18px rgba(255,255,255,.55), inset 0 0 18px rgba(255,255,255,.25);
+      border-radius:10px;
+      opacity:0;
+      transform:translateY(0) scale(1);
+      transition:opacity .12s ease, transform .18s ease, box-shadow .18s ease;
+      pointer-events:none;
+    }
+    #landOverlay.hot #whiteBoxHighlight{
+      opacity:1;
+      transform:translateY(-6px) scale(1.02);
+      box-shadow:0 0 26px rgba(255,255,255,.7), inset 0 0 22px rgba(255,255,255,.28);
+    }
+    #landOverlay.hot #landOverlayContent{
+      transform:translateY(-4px) scale(1.01);
+      filter:drop-shadow(0 0 18px rgba(255,255,255,.22));
+    }
+    #landOverlay.canClick{ cursor:pointer; }
+    #landOverlay:not(.canClick){ cursor:default; }
+
+    /* =========================
+       WHITE BOX NAME LABELS - FIXED POSITION (28% top, 15% right)
+    ========================= */
+    .white-box-name {
+      position: fixed;
+      color: #000 !important; /* BLACK color as requested */
+      font-weight: bold;
+      font-size: 22px;
+      text-align: right;
+      z-index: 25000;
+      pointer-events: none;
+      user-select: none;
+      text-shadow: 1px 1px 2px rgba(255,255,255,0.7);
+      background: transparent;
+      padding: 10px 15px;
+      border-radius: 8px;
+      top: 28%;
+      right: 15%;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      min-width: 220px;
+      max-width: 320px;
+      word-wrap: break-word;
+      line-height: 1.5;
+    }
+    
+    #landOverlay.hot .white-box-name {
+      opacity: 1;
+    }
+
+    /* =========================
+       DETAIL OVERLAY (shows Karmlate1 / ussrgiant1 / etc.)
+       - opens from white-box click
+       - fade in 1s
+       - NOT closable by click, only by top-left back
+    ========================= */
+    #detailOverlay{
+      position:fixed;
+      inset:0;
+      z-index:22000;
+      background:rgba(0,0,0,.20);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      opacity:0;
+      pointer-events:none;
+      transition:opacity 1s ease;
+    }
+    #detailOverlay.active{
+      opacity:1;
+      pointer-events:auto;
+    }
+    #detailOverlayContent{
+      position:relative;
+      width:100%;
+      height:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+    #detailOverlayImg{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* Text overlay for PNG descriptions - positioned in the black box area */
+    .png-description {
+      position: absolute;
+      z-index: 22001;
+      pointer-events: none;
+      user-select: none;
+      font-family: "Raleway", sans-serif;
+      font-weight: 500;
+      line-height: 1.4;
+      overflow-wrap: break-word;
+      hyphens: auto;
+      text-align: left;
+      padding: 15px;
+      box-sizing: border-box;
+      overflow: hidden;
+      display: none;
+    }
+
+    /* Position and size for each PNG's description box - ALL CHANGED to 50% width and start from 40% left */
+    #karmlate-desc {
+      width: 17.5%; /* 50% of original 35% */
+      height: 65%;
+      top: 15%;
+      left: 40%; /* Changed from 55% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #spirit-desc {
+      width: 16%; /* 50% of original 32% */
+      height: 60%;
+      top: 18%;
+      left: 40%; /* Changed from 58% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #human-desc {
+      width: 15%; /* 50% of original 30% */
+      height: 55%;
+      top: 22%;
+      left: 40%; /* Changed from 60% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #primordial-desc {
+      width: 17%; /* 50% of original 34% */
+      height: 68%;
+      top: 14%;
+      left: 40%; /* Changed from 56% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #echo-desc {
+      width: 16.5%; /* 50% of original 33% */
+      height: 62%;
+      top: 17%;
+      left: 40%; /* Changed from 57% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #bearer-desc {
+      width: 15.5%; /* 50% of original 31% */
+      height: 58%;
+      top: 20%;
+      left: 40%; /* Changed from 59% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #crazy-desc {
+      width: 16%; /* 50% of original 32% */
+      height: 56%;
+      top: 21%;
+      left: 40%; /* Changed from 58% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #lack-desc {
+      width: 17.5%; /* 50% of original 35% */
+      height: 70%;
+      top: 13%;
+      left: 40%; /* Changed from 55% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    #ussrgiant-desc {
+      width: 16.5%; /* 50% of original 33% */
+      height: 60%;
+      top: 18%;
+      left: 40%; /* Changed from 57% to 40% */
+      font-size: 14px;
+      color: #e0e0e0;
+      background: rgba(20, 20, 20, 0.85);
+      border-radius: 8px;
+      border: 1px solid rgba(100, 100, 100, 0.3);
+    }
+
+    @media (max-width: 1200px) {
+      .png-description {
+        font-size: 13px;
+        padding: 12px;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .png-description {
+        font-size: 12px;
+        padding: 10px;
+      }
+      #karmlate-desc,
+      #spirit-desc,
+      #human-desc,
+      #primordial-desc,
+      #echo-desc,
+      #bearer-desc,
+      #crazy-desc,
+      #lack-desc,
+      #ussrgiant-desc {
+        width: 20%; /* Adjusted for mobile */
+        height: 55%;
+        left: 40%; /* Keep at 40% */
+      }
+    }
+
+    @media (max-width: 600px) {
+      .png-description {
+        font-size: 11px;
+        padding: 8px;
+      }
+      #karmlate-desc,
+      #spirit-desc,
+      #human-desc,
+      #primordial-desc,
+      #echo-desc,
+      #bearer-desc,
+      #crazy-desc,
+      #lack-desc,
+      #ussrgiant-desc {
+        width: 22.5%; /* Adjusted for mobile */
+        height: 50%;
+        left: 40%; /* Keep at 40% */
+      }
+    }
+
+    /* =========================
+       EARTH FULLSCREEN VIEWER
+       - NOT closable by click, only by top-left back
+       - CHANGED: background to 100% black (#000000)
+    ========================= */
+    #earthViewer{
+      position:fixed;
+      inset:0;
+      z-index:25000; /* Increased to be below animated cards */
+      background:#000000; /* CHANGED: 100% black background */
+      display:none;
+      align-items:center;
+      justify-content:center;
+    }
+    #earthViewer.active{ display:flex; }
+    #earthViewer img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* =========================
+       MOON FULLSCREEN VIEWER
+       - Same style as Earth viewer
+    ========================= */
+    #moonViewer{
+      position:fixed;
+      inset:0;
+      z-index:25000;
+      background:#000000;
+      display:none;
+      align-items:center;
+      justify-content:center;
+    }
+    #moonViewer.active{ display:flex; }
+    #moonViewer img{
+      width:100%;
+      height:100%;
+      object-fit:contain;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* ===========================
+       HERO ORBIT (3 moving sprites)
+    =========================== */
+    .hero-orbit-wrap{
+      width:min(1100px, 96vw);
+      height:clamp(520px, 74vh, 980px);
+      margin:10px auto 28px auto;
+      position:relative;
+      z-index:15;
+    }
+    .hero-orbit-stage{
+      position:relative;
+      width:100%;
+      height:100%;
+      transform:translateZ(0);
+      will-change:transform;
+      pointer-events:none;
+    }
+    .hero-sprite{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      user-select:none;
+      filter:drop-shadow(0 0 18px rgba(255,255,255,.16));
+      will-change:transform;
+      pointer-events:none;
+    }
+
+    /* Click wrapper that uses ALPHA hit test (ONLY filled pixels work) */
+    .alpha-hit{
+      position:absolute;
+      left:50%;
+      top:50%;
+      transform:translate(-50%,-50%);
+      pointer-events:auto;
+      cursor:pointer;
+    }
+    .alpha-hit img{
+      display:block;
+      width:100%;
+      height:auto;
+      pointer-events:none;
+      user-select:none;
+    }
+
+    /* sizes */
+    #heroEarthImg{ width:clamp(240px, 34vw, 520px); height:auto; }
+    #heroMoon     { width:clamp(160px, 22vw, 360px); height:auto; }
+    #heroPortalHit{ width:clamp(220px, 30vw, 520px); }
+
+    .hero-note{
+      position:absolute;
+      bottom:6px;
+      left:50%;
+      transform:translateX(-50%);
+      font-size:12px;
+      opacity:.7;
+      color:#fff;
+      text-shadow:0 2px 10px rgba(0,0,0,.65);
+      pointer-events:none;
+    }
+
+    @media (max-width:900px){
+      .hero-orbit-wrap{ height:clamp(440px, 62vh, 780px); }
+      .white-box-name { 
+        font-size: 18px; 
+        min-width: 180px;
+        max-width: 250px;
+        right: 8%;
+        top: 25%;
+        text-align: right;
+      }
+    }
+
+    @media (max-width:600px){
+      .white-box-name { 
+        font-size: 16px; 
+        min-width: 150px;
+        max-width: 200px;
+        right: 5%;
+        top: 22%;
+        padding: 8px 12px;
+      }
+    }
+    html, body { height: 100%; }
+
+body{
+  margin:0;
+  padding:0;
+  overflow-x:hidden;
+  background:#000;
+  min-height: 100vh;
+}
+
+/* ✅ fixed full-screen background video */
+
+
+body{ position: relative; }
+html, body{
+  margin: 0;
+  padding: 0;
+}
+
+body{
+  position: relative;
+  min-height: 3000px; /* or whatever height you want */
+  overflow-x: hidden;
+  background: #000;
+}
+
+/* SCROLLING background video */
+.bg-video{
+  position: absolute;   /* ✅ scrolls with the page */
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;         /* ✅ matches body height */
+  z-index: -9999;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-video video{
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center; /* ✅ starts from top of tall video */
+  display: block;
+}
+
+  </style>
+</head>
+
+<body>
+  <div class="bg-video">
+    <video id="bgVideo" autoplay muted loop playsinline>
+      <source src="backgroundweb.mp4" type="video/mp4">
+    </video>
+  </div>
+
+  <!-- everything else -->
+</body>
+
+
+  <!-- everything else -->
+
+
+
+  <!-- everything else stays the same -->
+
+
+
+
+  <!-- NEW: Animated Cards Background -->
+  <img class="cards-bg" id="cardsBg" src="Adobe%20Express%20-%201229(3).gif" alt="Animated Cards Background"/>
+
+  <!-- NEW: Animated Cards Lanes - UPDATED with 3 separate lanes -->
+  <div class="lanes" id="cardsLanes">
+    <!-- TOP LANE: Left to Right -->
+    <div class="lane-top">
+      <div class="track ltr" id="laneTop" style="animation-duration: 28s"></div>
+    </div>
+    
+    <!-- MIDDLE LANE: Right to Left -->
+    <div class="lane-middle">
+      <div class="track rtl" id="laneMiddle" style="animation-duration: 24s"></div>
+    </div>
+    
+    <!-- BOTTOM LANE: Left to Right -->
+    <div class="lane-bottom">
+      <div class="track ltr" id="laneBottom" style="animation-duration: 30s"></div>
+    </div>
+  </div>
+
+  <!-- NEW: Animated Cards Hint -->
+  <div class="cards-hint" id="cardsHint">GIF starts now — cards appear after 10 seconds ✨</div>
+
+  <!-- NEW: Animated Cards Modal -->
+  <div class="cards-modal" id="cardsModal" aria-hidden="true">
+    <div class="backdrop" id="cardsBackdrop"></div>
+    <div class="center">
+      <div class="cards-modal-card" id="cardsModalCard" role="button" tabindex="0" aria-label="Close preview">
+        <img id="cardsModalImg" alt="preview" />
+      </div>
+    </div>
+  </div>
+
+  <!-- MUSIC - VOLUME REDUCED BY 65% -->
+  <audio id="bgMusic" src="Victory Unfolds - Eclipse of Steel - Sonauto.mp3" preload="auto" loop></audio>
+
+  <!-- CLICK SOUND -->
+  <audio id="clickSound" src="0106 (2)(2).mp4" preload="auto"></audio>
+
+  <!-- MID EARTH'S OCEAN SOUND -->
+  <audio id="midEarthOceanSound" src="Mid Earth's ocean.mp3" preload="auto"></audio>
+
+ <!-- EARTH FULLSCREEN VIEWER -->
+<div id="earthViewer" aria-hidden="true">
+  <video id="earthVideo" autoplay loop muted playsinline>
+    <source src="Adobe Express - 1229(3).mp4" type="video/mp4">
+  </video>
+</div>
+
+
+  <!-- MOON FULLSCREEN VIEWER -->
+  <div id="moonViewer" aria-hidden="true">
+    <img src="0124.gif" alt="Moon Fullscreen">
+  </div>
+
+  <!-- LAND OVERLAY (opens after zoom, auto) -->
+  <div id="landOverlay" aria-hidden="true">
+    <div id="landOverlayContent">
+      <img id="landOverlayImg" src="" alt="Land">
+      <div id="whiteBoxHighlight" aria-hidden="true"></div>
+      <!-- White box name labels will be inserted here -->
+    </div>
+  </div>
+
+  <!-- DETAIL OVERLAY (opens after clicking white box) -->
+  <div id="detailOverlay" aria-hidden="true">
+    <div id="detailOverlayContent">
+      <img id="detailOverlayImg" src="" alt="Detail">
+      <!-- Description overlays for each PNG -->
+      <div id="karmlate-desc" class="png-description"></div>
+      <div id="spirit-desc" class="png-description"></div>
+      <div id="human-desc" class="png-description"></div>
+      <div id="primordial-desc" class="png-description"></div>
+      <div id="echo-desc" class="png-description"></div>
+      <div id="bearer-desc" class="png-description"></div>
+      <div id="crazy-desc" class="png-description"></div>
+      <div id="lack-desc" class="png-description"></div>
+      <div id="ussrgiant-desc" class="png-description"></div>
+    </div>
+  </div>
+
+  <!-- TOP LEFT BACK BUTTON (ENTIRE AREA CLICKABLE - NO ALPHA HIT) -->
+  <div id="mapToggleBtn" aria-label="Back">
+    <!-- Earth ball icon (top-left) -->
+    <img id="mapToggleImg" src="earth_day_night_10s.gif" alt="Back">
+  </div>
+
+  <!-- Map Drawer -->
+  <div id="mapDrawerOverlay"></div>
+
+  <div id="mapDrawer">
+    <div id="mapStage">
+      <!-- Full map background -->
+<video class="gif-base" id="earthMapVideo" autoplay loop muted playsinline>
+  <source src="ezgif-6110ebd4b603cb5e.mp4" type="video/mp4">
+</video>
+
+
+      <!-- SHOW PNGs -->
+      <img class="area-show" data-i="0" src="maping.png"   alt="show 0">
+      <img class="area-show" data-i="1" src="maping1.png"  alt="show 1">
+      <img class="area-show" data-i="2" src="maping2.png"  alt="show 2">
+      <img class="area-show" data-i="3" src="maping3.png"  alt="show 3">
+      <img class="area-show" data-i="4" src="maping4.png"  alt="show 4">
+      <img class="area-show" data-i="5" src="maping45.png" alt="show 5">
+      <img class="area-show" data-i="6" src="maping6.png"  alt="show 6">
+      <img class="area-show" data-i="7" src="maping7.png"  alt="show 7">
+      <img class="area-show" data-i="8" src="maping8.png"  alt="show 8">
+
+      <!-- GLOW PNGs -->
+      <img class="area-glow" data-i="0" src="maping_glow.png"   alt="glow 0">
+      <img class="area-glow" data-i="1" src="maping1_glow.png"  alt="glow 1">
+      <img class="area-glow" data-i="2" src="maping2_glow.png"  alt="glow 2">
+      <img class="area-glow" data-i="3" src="maping3_glow.png"  alt="glow 3">
+      <img class="area-glow" data-i="4" src="maping4_glow.png"  alt="glow 4">
+      <img class="area-glow" data-i="5" src="maping45_glow.png" alt="glow 5">
+      <img class="area-glow" data-i="6" src="maping6_glow.png"  alt="glow 6">
+      <img class="area-glow" data-i="7" src="maping7_glow.png"  alt="glow 7">
+      <img class="area-glow" data-i="8" src="maping8_glow.png"  alt="glow 8">
+    </div>
+  </div>
+
+  <!-- Landing Overlay -->
+  <div id="landingOverlay" class="landing-overlay">
+    <button id="landing-en" onclick="selectLanguage('en')" class="landing-button"></button>
+    <button id="landing-ar" onclick="selectLanguage('ar')" class="landing-button"></button>
+    <button id="landing-ja" onclick="selectLanguage('ja')" class="landing-button"></button>
+    <button id="landing-es" onclick="selectLanguage('es')" class="landing-button"></button>
+    <button id="landing-zh" onclick="selectLanguage('zh')" class="landing-button"></button>
+  </div>
+
+  <!-- Language Selector -->
+  <div class="language-selector">
+    <button id="lang-en" onclick="changeLanguage('en')"></button>
+    <button id="lang-ar" onclick="changeLanguage('ar')"></button>
+    <button id="lang-ja" onclick="changeLanguage('ja')"></button>
+    <button id="lang-es" onclick="changeLanguage('es')"></button>
+    <button id="lang-zh" onclick="changeLanguage('zh')"></button>
+  </div>
+
+  <!-- Overlay & Modal Box -->
+  <div class="overlay" id="overlay"></div>
+  <div class="modal" id="modal">
+    <h2 id="modal-title"></h2>
+    <p id="modal-content"></p>
+    <button id="modal-close" onclick="closeModal()"></button>
+  </div>
+
+  <!-- Side tapes -->
+  <div class="scroll-tape left-tape">
+    <img src="foxys.png" alt="Map Piece 1" onclick="openModal(1)">
+    <img src="bags.png"  alt="Map Piece 2" onclick="openModal(2)">
+    <img src="bb4.png"    alt="Map Piece 3" onclick="openModal(3)">
+    <img src="bb3.png" alt="Map Piece 4" onclick="openModal(4)">
+  </div>
+
+  <div class="scroll-tape right-tape">
+    <img src="boxys.png"   alt="Map Piece 5" onclick="openModal(5)">
+    <img src="maxy.png"  alt="Map Piece 6" onclick="openModal(6)">
+    <img src="bb1.png"   alt="Map Piece 7" onclick="openModal(7)">
+    <img src="bb2.png"  alt="Map Piece 8" onclick="openModal(8)">
+  </div>
+
+  <!-- Main Content -->
+  <div id="app" class="container">
+    <h1 id="welcome-title"></h1>
+
+<!-- WEEKDAY GIF STRIP (between title and description) -->
+<div class="weekday-strip" id="weekdayStrip" aria-hidden="false"></div>
+
+<p id="welcome-description"></p>
+
+
+    <!-- MID: 3 MOVING THINGS -->
+    <div class="hero-orbit-wrap">
+      <div class="hero-orbit-stage" id="heroOrbitStage">
+
+        <!-- PORTAL CLICK WRAPPER (alpha hit -> open map) -->
+        <div id="heroPortalHit" class="alpha-hit" data-alpha-hit="true" data-action="openMap" aria-label="Open Map">
+          <img id="heroPortalImg" src="night_sweep_full_png_fade_in_out.gif" alt="Open Map">
+        </div>
+
+        <!-- EARTH CLICK WRAPPER (alpha hit -> open Adobe Express fullscreen) -->
+        <div id="heroEarthHit" class="alpha-hit" data-alpha-hit="true" data-action="openEarth" aria-label="Open Earth">
+          <img id="heroEarthImg" src="earth_day_night_10s.gif" alt="Earth">
+        </div>
+
+        <!-- MOON CLICK WRAPPER (alpha hit -> open Moon fullscreen) -->
+        <div id="heroMoonHit" class="alpha-hit" data-alpha-hit="true" data-action="openMoon" aria-label="Open Moon">
+          <img id="heroMoonImg" src="moon_clean_start_end_one_direction.gif" alt="Moon">
+        </div>
+
+        <div class="hero-note">Click only the filled pixels</div>
+      </div>
+    </div>
+
+    <!-- cards -->
+    <div class="card-row">
+      <div style="display:flex;flex-direction:column;align-items:center;">
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <card data-image="cardex1.png"  title-key="card0_title" content-key="card0_content" :index="0"></card>
+          <card data-image="cardex2.png"  title-key="card1_title" content-key="card1_content" :index="1"></card>
+          <card data-image="cardex3.png"  title-key="card2_title" content-key="card2_content" :index="2"></card>
+          <card data-image="cardex4.png" title-key="card3_title" content-key="card3_content" :index="3"></card>
+        </div>
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <div class="circle-button" @click="toggleCard(0)"></div>
+          <div class="circle-button" @click="toggleCard(1)"></div>
+          <div class="circle-button" @click="toggleCard(2)"></div>
+          <div class="circle-button" @click="toggleCard(3)"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <card data-image="cardex5.png" title-key="card4_title" content-key="card4_content" :index="4"></card>
+          <card data-image="cardex6.png" title-key="card5_title" content-key="card5_content" :index="5"></card>
+          <card data-image="cardex7.png" title-key="card6_title" content-key="card6_content" :index="6"></card>
+          <card data-image="cardex8.png" title-key="card7_title" content-key="card7_content" :index="7"></card>
+        </div>
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <div class="circle-button" @click="toggleCard(4)"></div>
+          <div class="circle-button" @click="toggleCard(5)"></div>
+          <div class="circle-button" @click="toggleCard(6)"></div>
+          <div class="circle-button" @click="toggleCard(7)"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <card data-image="w1.png" title-key="card8_title" content-key="card8_content" :index="8"></card>
+          <card data-image="w2.png" title-key="card9_title" content-key="card9_content" :index="9"></card>
+          <card data-image="w3.png" title-key="card10_title" content-key="card10_content" :index="10"></card>
+          <card data-image="w4.png" title-key="card11_title" content-key="card11_content" :index="11"></card>
+        </div>
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <div class="circle-button" @click="toggleCard(8)"></div>
+          <div class="circle-button" @click="toggleCard(9)"></div>
+          <div class="circle-button" @click="toggleCard(10)"></div>
+          <div class="circle-button" @click="toggleCard(11)"></div>
+        </div>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;margin-top:20px;">
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <card data-image="w5.png" title-key="card12_title" content-key="card12_content" :index="12"></card>
+          <card data-image="w6.png"  title-key="card13_title" content-key="card13_content" :index="13"></card>
+          <card data-image="w7.png"  title-key="card14_title" content-key="card14_content" :index="14"></card>
+          <card data-image="w8.png" title-key="card15_title" content-key="card15_content" :index="15"></card>
+        </div>
+        <div style="display:flex;justify-content:center;gap:20px;flex-wrap:wrap;">
+          <div class="circle-button" @click="toggleCard(12)"></div>
+          <div class="circle-button" @click="toggleCard(13)"></div>
+          <div class="circle-button" @click="toggleCard(14)"></div>
+          <div class="circle-button" @click="toggleCard(15)"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 3D CARD CREATOR SECTION -->
+  <section class="card-creator-section" id="cardCreator">
+    <h2 id="creator-title">Create Your Own 3D Card</h2>
+    <p id="creator-description">Upload front and back images to create a custom 3D card with the same effects as the cards above</p>
+    
+    <div class="creator-container">
+      <div class="upload-area">
+        <h3 id="upload-title">Upload Images</h3>
+        
+        <div class="upload-box" id="frontUploadBox" onclick="document.getElementById('frontInput').click()">
+          <img id="frontPreview" alt="Front preview">
+          <span id="frontText">Click to upload front image</span>
+        </div>
+        <input type="file" id="frontInput" class="upload-input" accept="image/*" onchange="handleFrontUpload(event)">
+        <label for="frontInput" id="frontLabel" class="upload-label">Choose Front Image</label>
+        
+        <div class="upload-box" id="backUploadBox" onclick="document.getElementById('backInput').click()">
+          <img id="backPreview" alt="Back preview">
+          <span id="backText">Click to upload back image</span>
+        </div>
+        <input type="file" id="backInput" class="upload-input" accept="image/*" onchange="handleBackUpload(event)">
+        <label for="backInput" id="backLabel" class="upload-label">Choose Back Image</label>
+      </div>
+      
+      <div class="preview-area">
+        <h3 id="preview-title">3D Preview</h3>
+        <div class="preview-card-wrap" id="previewCardWrap" onclick="togglePreviewCard()">
+          <div class="preview-card" id="previewCard">
+            <div class="card-face card-front" id="cardFront">
+              <!-- Front image will be placed here -->
+              <span id="cardFrontText">Front Image</span>
+            </div>
+            <div class="card-face card-back" id="cardBack">
+              <!-- Back image will be placed here -->
+              <span id="cardBackText">Back Image</span>
+            </div>
+          </div>
+        </div>
+        
+        <div class="preview-controls">
+          <button class="preview-btn" onclick="togglePreviewCard()" id="flipBtn">Flip Card</button>
+          <button class="preview-btn" onclick="resetCardCreator()" id="resetBtn">Reset</button>
+          <button class="preview-btn" onclick="saveCard()" id="saveBtn" disabled>Save Card</button>
+        </div>
+        
+        <div class="instructions">
+          <h3 id="instructions-title">How to use:</h3>
+          <ul id="instructions-list">
+            <li>Upload front and back images (JPG or PNG)</li>
+            <li>Click "Flip Card" to see the 3D effect</li>
+            <li>Click on the card to flip it automatically</li>
+            <li>Hover over the card for 3D tilt effect</li>
+            <li>Save your custom card when ready</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="video-section-bottom">
+    <div class="video-wrapper">
+      <div class="video-box youtube-video">
+        <iframe width="300" height="500"
+          src="https://www.youtube.com/embed/YOUR_YOUTUBE_VIDEO_ID?autoplay=1&mute=1&loop=1&controls=0"
+          frameborder="0" allowfullscreen></iframe>
+      </div>
+      <div class="video-box tiktok-video">
+        <iframe width="300" height="500"
+          src="https://www.tiktok.com/embed/v2/YOUR_TIKTOK_VIDEO_ID?autoplay=1&loop=1"
+          frameborder="0" allowfullscreen></iframe>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/vue/2.0.1/vue.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/i18next/dist/umd/i18next.min.js"></script>
+
+  <script>
+
+
+
+    window.i18next = i18next;
+
+    i18next.init({ 
+      lng: 'en',
+      resources: {
+        en: { translation: {
+          welcomeTitle: "Welcome to Our Card Game!",
+          welcomeDescription: "Join our Discord community and start playing today!",
+          close: "Close",
+          landing_en: "Let's Go HS ZERO",
+          landing_ar: "هيا بنا HS ZERO",
+          landing_ja: "さあ始めよう HS ZERO",
+          landing_es: "¡Vamos HS ZERO!",
+          landing_zh: "开始吧 HS ZERO",
+          lang_en: "English",
+          lang_ar: "عربي",
+          lang_ja: "日本語",
+          lang_es: "Español",
+          lang_zh: "中文",
+          card0_title:"Humans", card1_title:"Spirits", card2_title:"The Primordial Anchors", card3_title:"Karmlate",
+          card4_title:"The Echo-Stalkers", card5_title:"The Buried Ones", card6_title:"USSR giants", card7_title:"The Bearers",
+          card8_title:"", card9_title:"", card10_title:"", card11_title:"",
+          card12_title:"", card13_title:"", card14_title:"", card15_title:"",
+          card0_content:"",
+          card1_content:"",
+          card2_content:"",
+          card3_content:"",
+          card4_content:"",
+          card5_content:"",
+          card6_content:"",
+          card7_content:"",
+          card8_content:"",
+          card9_content:"",
+          card10_content:"",
+          card11_content:"",
+          card12_content:"",
+          card13_content:"",
+          card14_content:"",
+          card15_content:"",
+          photo1:"The 8 Nationalities cards consist of several levels and percentages for obtaining each one. The player can choose which nationality they want to take from each box.", photo2:"Underworld coins include regular Carmelites and silver Carmelites covered in copper, which are used for various purposes in the game.", photo3:"Boxes containing randomly generated city backgrounds and tools to help develop characters and monsters from within the Earth.", photo4:"Boxes containing randomly generated city backgrounds and tools to help develop characters and monsters from within the Earth.",
+          photo5:"The collection box contains all nationalities and is the largest box that can be purchased.", photo6:"The HS0 Lord card takes more than 80 players, each interacting with one of them to obtain a Lord from the 8 nationalities.", photo7:"Boxes containing randomly generated city backgrounds and tools to help develop characters and extraterrestrial monsters", photo8:"Boxes containing randomly generated city backgrounds and tools to help develop characters and extraterrestrial monsters",
+          // White box names in different languages - 40% smaller for all languages
+          karm_name: "<span style='font-size: 0.6em'>Karmlate</span>",
+          giant_name: "<span style='font-size: 0.6em'>The USSR Giants</span>",
+          barid_alive_name: "<span style='font-size: 0.6em'>The Buried Ones</span>",
+          human_name: "<span style='font-size: 0.6em'>The Surface Humans</span>",
+          monsters_name: "<span style='font-size: 0.6em'>The Primordial Anchors</span>",
+          vamp_name: "<span style='font-size: 0.6em'>The Echo-Stalkers</span>",
+          drwaf_name: "<span style='font-size: 0.6em'>The Bearers</span>",
+          spirits_name: "<span style='font-size: 0.6em'>The Spirits</span>",
+          // Detailed descriptions for each PNG (normal size)
+          karmlate_desc: "Karmlate are spoken of only in sealed chambers and redacted archives, a genderless sovereign caste that has ruled the Down Earth since before recorded memory, unseen yet absolute, their authority flowing through currency, ration codes, and blood-oaths rather than crowns. They do not govern openly; they *calculate*, manipulating markets, debts, and survival itself, ensuring that every tunnel, city-core, and surface remnant remains economically dependent on them. Through their control of money they command the Bearers, binding strength to servitude, and through secrecy they bind governments, for every nation that still breathes knows that without Karmlate sanction, Down Earth would collapse into famine and war within a single generation.",
+          spirit_desc: "Spirits are the final consequence of death itself, souls torn loose and drifting upward, drawn instinctively toward the surface. The Bearers hunt and bind them, not out of mercy but necessity, for uncontrolled spirits become weapons in the hands of rogue humans and forbidden cultists. Before the sun-surface catastrophe, the Karmlate forged secret accords with Earth's governments: souls would be contained below, studied, bartered, and suppressed, in exchange for silence and cooperation. In death, as in life, nothing escapes control.",
+          human_desc: "Humans are refugees of a broken sun. When vast regions of the Earth's surface ignited and radiation turned cities into death zones, humanity fled downward in panic and desperation. Underground life was never meant for billions, yet necessity crushed resistance. Those who remain human now live packed in shadowed sectors, clinging to decaying technology and rationed light, haunted by memories of skies they will never see again.",
+          primordial_desc: "The Primordial Anchors are not a people but a terror—entities born of Earth's deepest wounds and of places beyond the sky itself, creatures older than nations and indifferent to life. Their existence is known only to fragments of governments and black-vault research cells, yet even that knowledge is filtered through Karmlate hands. The Karmlate hoard all data, suppressing truths, weaponizing ignorance, for the Anchors are not merely studied—they are *contained*, and if their bindings were ever to fail, the Down Earth and the surface alike would drown in extinction.",
+          echo_desc: "The Echo-Stalkers are what remains when survival twists into predation. Once part of the Atlas Program, they were abandoned when supply lines failed and bureaucracy chose efficiency over mercy. Starving in the deepest sectors, their bodies adapted brutally: skin thinned to drink the core's heat, ears warped to track heartbeats through miles of stone, and fangs grew where fear replaced reason. They are no longer human, no longer citizens, but hunters in the dark—living proof of what happens when governments look away.",
+          bearer_desc: "Bearers are the iron spine of the Down Earth, short of stature yet forged with unnatural strength, bred and conditioned to endure crushing labor where machines fail and men break. For countless ages they have lived beneath the surface alongside the Karmlate, carving cities from stone, hauling relic-machines, and stabilizing the very crust of the world. Calm, disciplined, and bound by ritual obedience, the Bearers do not question their role, for history itself has taught them that survival below demands order, and order demands sacrifice.",
+          crazy_desc: "The Buried Ones are the burned and broken, dragged back from the edge of death after surface infernos melted their flesh and shattered their minds. Too unstable to live among surface survivors yet too valuable to discard, they were taken down by the Bearers and handed to the Karmlate as living tools. Their insanity makes them unpredictable, violent, and dangerous, yet in their madness lies usefulness—shock labor, expendable enforcement, and reminders of what awaits disobedience.",
+          lack_desc: "Mid Earth's ocean is a sealed abyss hidden between the planet's inner layers, a lightless world of crushing pressure and slow, violent currents driven by the wounded core of Earth itself. Within it dwell colossal monsters of impossible scale, living fortresses of flesh and mineral whose movement can shift the land above, alongside lesser horrors born without sun, law, or mercy. These ecosystems feed on heat, decay, and unknown energies, defying all known evolution. Knowledge of the abyss is erased by governments and sealed by the Karmlate, for every descent into its depths ends in loss, corrupted data, or silence. What sleeps in the Mid Earth Ocean is ancient, foreign, and patient—and if it ever rises, no layer of Earth will remain untouched.",
+          ussrgiant_desc: "USSR Giants are relic-soldiers of a dead empire, products of a forgotten injection program meant to create invincible warriors. Enlarged, strengthened, and stripped of choice, they were discarded when the Soviet collapse made them inconvenient liabilities. Sealed underground, fed just enough to live, they remain loyal to no flag, only to survival, towering remnants of a political experiment that outlived its creators and now waits in silence beneath the world.",
+          // Card Creator Translations
+          creator_title: "Create Your Own 3D Card",
+          creator_description: "Upload front and back images to create a custom 3D card with the same effects as the cards above",
+          upload_title: "Upload Images",
+          front_text: "Click to upload front image",
+          back_text: "Click to upload back image",
+          front_label: "Choose Front Image",
+          back_label: "Choose Back Image",
+          preview_title: "3D Preview",
+          card_front_text: "Front Image",
+          card_back_text: "Back Image",
+          flip_btn: "Flip Card",
+          reset_btn: "Reset",
+          save_btn: "Save Card",
+          save_btn_disabled: "Upload Both Images First",
+          instructions_title: "How to use:",
+          instructions_1: "Upload front and back images (JPG or PNG)",
+          instructions_2: "Click \"Flip Card\" to see the 3D effect",
+          instructions_3: "Click on the card to flip it automatically",
+          instructions_4: "Hover over the card for 3D tilt effect",
+          instructions_5: "Save your custom card when ready",
+          save_success: "Card saved successfully! In a real application, this would save your custom card to the gallery.",
+          save_error: "Please upload both front and back images first."
+        }},
+        ar: { translation: { card0_title:"البشر",
+card1_title:"الأرواح",
+card2_title:"المراسي البدائية",
+card3_title:"كارمليت",
+card4_title:"مطاردو الصدى",
+card5_title:"المدفونون",
+card6_title:"عمالقة الاتحاد السوفيتي",
+card7_title:"الحاملون",
+card8_title:"",
+card9_title:"",
+card10_title:"",
+card11_title:"",
+card12_title:"",
+card13_title:"",
+card14_title:"",
+card15_title:"",
+
+          welcomeTitle:"مرحبًا بك في لعبة البطاقات الخاصة بنا!",
+          welcomeDescription:"انضم إلى مجتمعنا على Discord وابدأ اللعب اليوم!",
+          close:"إغلاق",
+          landing_en:"Let's Go HS ZERO",
+          landing_ar:"هيا بنا HS ZERO",
+          landing_ja:"سأبدأ HS ZERO",
+          landing_es:"¡Vamos HS ZERO!",
+          landing_zh:"开始吧 HS ZERO",
+          lang_en:"English",
+          lang_ar:"عربي",
+          lang_ja:"日本語",
+          lang_es:"Español",
+          lang_zh:"中文",
+          photo1:" كروت ال٨ جنسيات يتكون من عده لفلات ونسب للحصول علي كل منها يمكن للاعب اختيار اي جنس يريد ان ياخذ من كل صندوق ", photo2:" عملات العالم السفلي عملات كرملات عاديه وعملات كرملات فضيه مغطاه بالنحاس يستخدمو في اغراض مختلفه في العبه", photo3:"صناديق تحتوي علي خلفيات مدن بشكل عشواءي وعلي ادوات تساعد علي تطوير الشخصيات والوحوش من داخل الارض", photo4:"صناديق تحتوي علي خلفيات مدن بشكل عشواءي وعلي ادوات تساعد علي تطوير الشخصيات والوحوش من داخل الارض",
+          photo5:"  صندوق المجمع يحتوي علي جميع الجنسيات وهو اكبر صندوق يمكن شراءه ", photo6:" كرت hs0 lord يأخذ اكثر ٨٠ لاكب كل شعر تفاعلا واحد منها للحصول بشكل عشراءي علي lord  من ال ٨ جنسيات ", photo7:" صناديق تحتوي علي خلفيات مدن بشكل عشواءي وعلي ادوات تساعد علي تطوير الشخصيات والوحوش من خارج الارض ", photo8:"صناديق تحتوي علي خلفيات مدن بشكل عشواءي وعلي ادوات تساعد علي تطوير الشخصيات والوحوش من خارج الارض  ",
+          // Arabic translations for white box names - 40% smaller
+          karm_name: "<span style='font-size: 0.6em'>كارمليت</span>",
+          giant_name: "<span style='font-size: 0.6em'>عمالقة الاتحاد السوفيتي</span>",
+          barid_alive_name: "<span style='font-size: 0.6em'>المدفونون أحياء</span>",
+          human_name: "<span style='font-size: 0.6em'>بشر السطح</span>",
+          monsters_name: "<span style='font-size: 0.6em'>المراسي البدائية</span>",
+          vamp_name: "<span style='font-size: 0.6em'>مطاردو الصدى</span>",
+          drwaf_name: "<span style='font-size: 0.6em'>الحاملون</span>",
+          spirits_name: "<span style='font-size: 0.6em'>الأرواح</span>",
+          // Arabic translations for descriptions (normal size)
+          karmlate_desc: "كارمليت يُتحدث عنهم فقط في الغرف المغلقة والمحفوظات المحذوفة، طبقة حاكمة لا جنسية حكمت الأرض السفلى منذ ما قبل الذاكرة المسجلة، غير مرئية لكنها مطلقة، سلطتها تتدفق عبر العملة، رموز الحصص، وعهود الدم بدلاً من التيجان. لا يحكمون علانية؛ بل يحسبون، يتلاعبون بالأسواق، الديون، والبقاء نفسه، ويضمنون أن كل نفق، نواة مدينة، وبقايا السطح تبقى معتمدة اقتصاديًا عليهم. من خلال سيطرتهم على المال يأمرون الحاملون، بربط القوة بالعبودية، ومن خلال السرية يربطون الحكومات، لأن كل أمة لا تزال تتنفس تعرف أنه بدون موافقة كارمليت، ستنهار الأرض السفلى في مجاعة وحرب خلال جيل واحد.",
+          spirit_desc: "الأرواح هي النتيجة النهائية للموت نفسه، أرواح ممزقة وتنجرف للأعلى، تجذب غريزيًا نحو السطح. الحاملون يصطادون ويربطونهم، ليس بدافع الرحمة بل الضرورة، لأن الأرواح غير المتحكم فيها تصبح أسلحة في أيدي البشر المارقين والطوائف المحرمة. قبل كارثة سطح الشمس، صاغ كارمليت اتفاقات سرية مع حكومات الأرض: ستُحتجز الأرواح في الأسفل، تُدرس، تُتاجر بها، وتُقمع، مقابل الصمت والتعاون. في الموت، كما في الحياة، لا شيء يفلت من السيطرة.",
+          human_desc: "البشر لاجئون شمس مكسورة. عندما اشتعلت مناطق شاسعة من سطح الأرض وتحول الإشعاع المدن إلى مناطق موت، هرب البشر للأسفل في ذعر ويأس. الحياة تحت الأرض لم تكن مخصصة لمليارات، لكن الضرورة سحقت المقاومة. أولئك الذين يبقون بشرًا الآن يعيشون محشورين في قطاعات مظلمة، متشبثين بتكنولوجيا متدهورة وضوء مقنن، مسكونون بذكريات السماوات التي لن يروها مرة أخرى.",
+          primordial_desc: "المراسي البدائية ليست شعبًا بل رعبًا - كيانات ولدت من أعمق جروح الأرض ومن أماكن خارج السماء نفسها، مخلوقات أقدم من الأمم وغير مبالية بالحياة. وجودها معروف فقط لأجزاء من الحكومات وخلايا البحث في القبو الأسود، لكن حتى تلك المعرفة تُفلتر من خلال أيدي كارمليت. كارمليت يخزنون كل البيانات، يقمعون الحقائق، يسخرون الجهل، لأن المراسي لا تُدرس فحسب - بل يتم احتواؤها، وإذا فشلت روابطهم يومًا، فإن الأرض السفلى والسطح سيغرقان معًا في الانقراض.",
+          echo_desc: "مطاردو الصدى هم ما تبقى عندما يلتوي البقاء ليصبح افتراسًا. كانوا مرة جزءًا من برنامج أطلس، تُركوا عندما فشلت خطوط الإمداد واختارت البيروقراطية الكفاءة على الرحمة. يتضورون جوعًا في أعمق القطاعات، تكيفت أجسادهم بوحشية: جلد رقيق ليشرب حرارة النواة، آذان مشوهة لتتبع دقات القلب عبر أميال من الحجر، وناب نمت حيث حل الخوف محل العقل. لم يعودوا بشرًا، لم يعودوا مواطنين، بل صيادين في الظلام - دليل حي على ما يحدث عندما تنظر الحكومات بعيدًا.",
+          bearer_desc: "الحاملون هي العمود الفقري الحديدي للأرض السفلى، قصيري القامة لكنهم مشكلين بقوة غير طبيعية، مُربّين ومشروطين لتحمل العمل الساحق حيث تفشل الآلات ويكسر الرجال. لقرون لا تحصى عاشوا تحت السطح بجانب كارمليت، ينحتون مدنًا من الحجر، يحملون آلات الأثر، ويستقرون قشرة العالم نفسها. هادئون، منضبطون، ومقيدون بالطاعة الطقسية، الحاملون لا يشككون في دورهم، لأن التاريخ نفسه علمهم أن البقاء في الأسفل يتطلب نظامًا، والنظام يتطلب تضحية.",
+          crazy_desc: "المدفونون أحياء هم المحترقون والمكسورون، سُحبوا من حافة الموت بعد أن أذابت حرائق السطح لحمهم وحطمت عقولهم. غير مستقرين للعيش بين ناجي السطح لكن قيمين جدًا للتجاهل، أُخذوا للأسفل بواسطة الحاملون وسلموا لكارمليت كأدوات حية. جنونهم يجعلهم غير متوقعين، عنيفين، وخطيرين، لكن في جنونهم تكمن الفائدة - عمل الصدمة، إنفاذ يمكن التضحية به، وتذكير بما ينتظر العصيان.",
+          lack_desc: "محيط الأرض الوسطى هو هاوية مغلقة مخبأة بين الطبقات الداخلية للكوكب، عالم معتم من ضغط ساحق وتيارات بطيئة وعنيفة مدفوعة بنواة الأرض المصابة. بداخله تسكن وحوش ضخمة بمقياس مستحيل، حصون حية من لحم ومعادن يمكن لحركتها أن تحرك الأرض أعلاه، بجانب أهوال أصغر ولدت بدون شمس، قانون، أو رحمة. هذه النظم البيئية تتغذى على الحرارة، التحلل، وطاقات غير معروفة، تتحدى كل التطور المعروف. معرفة الهاوية محوها الحكومات وأغلقها كارمليت، لأن كل نزول في أعماقها ينتهي بخسارة، بيانات فاسدة، أو صمت. ما ينام في محيط الأرض الوسطى قديم، أجنبي، وصبور - وإذا ارتفع يومًا، لن تبقى أي طبقة من الأرض دون مساس.",
+          ussrgiant_desc: "عمالقة الاتحاد السوفيتي هم جنود أثر لإمبراطورية ميتة، منتجات برنامج حقن منسي مصمم لخلق محاربين لا يقهرين. مُكبّرون، مُقوّون، ومُجرّدون من الاختيار، تخلوا عنهم عندما جعلهم انهيار الاتحاد السوفيتي مسؤوليات غير ملائمة. مختومون تحت الأرض، يُغذون فقط بما يكفي للعيش، يبقون مخلصين لأي علم، فقط للبقاء، بقايا عملاقة لتجربة سياسية عاشت أكثر من خالقها وتنتظر الآن في صمت تحت العالم.",
+          // Card Creator Translations - Arabic
+          creator_title: "أنشئ بطاقتك ثلاثية الأبعاد الخاصة",
+          creator_description: "قم برفع صور الوجه والظهر لإنشاء بطاقة ثلاثية الأبعاد مخصصة بنفس تأثيرات البطاقات أعلاه",
+          upload_title: "رفع الصور",
+          front_text: "انقر لرفع صورة الوجه",
+          back_text: "انقر لرفع صورة الظهر",
+          front_label: "اختر صورة الوجه",
+          back_label: "اختر صورة الظهر",
+          preview_title: "معاينة ثلاثية الأبعاد",
+          card_front_text: "صورة الوجه",
+          card_back_text: "صورة الظهر",
+          flip_btn: "قلب البطاقة",
+          reset_btn: "إعادة تعيين",
+          save_btn: "حفظ البطاقة",
+          save_btn_disabled: "قم برفع الصورتين أولاً",
+          instructions_title: "كيفية الاستخدام:",
+          instructions_1: "قم برفع صور الوجه والظهر (JPG أو PNG)",
+          instructions_2: "انقر على \"قلب البطاقة\" لرؤية التأثير ثلاثي الأبعاد",
+          instructions_3: "انقر على البطاقة لقلبها تلقائيًا",
+          instructions_4: "مرر فوق البطاقة لتأثير الميل ثلاثي الأبعاد",
+          instructions_5: "احفظ بطاقتك المخصصة عندما تكون جاهزًا",
+          save_success: "تم حفظ البطاقة بنجاح! في التطبيق الحقيقي، سيتم حفظ بطاقتك المخصصة في المعرض.",
+          save_error: "يرجى رفع صور الوجه والظهر أولاً."
+          
+        }},
+        ja: { translation: { card0_title:"人類",
+card1_title:"精霊",
+card2_title:"原始の錨",
+card3_title:"カームレート",
+card4_title:"エコーストーカー",
+card5_title:"埋もれた者たち",
+card6_title:"ソ連の巨人たち",
+card7_title:"担い手たち",
+card8_title:"",
+card9_title:"",
+card10_title:"",
+card11_title:"",
+card12_title:"",
+card13_title:"",
+card14_title:"",
+card15_title:"",
+
+          welcomeTitle:"カードゲームへようこそ！",
+          welcomeDescription:"Discordコミュニティに参加して、今日からプレイを始めましょう！",
+          close:"閉じる",
+          landing_en:"Let's Go HS ZERO",
+          landing_ar:"هيا بنا HS ZERO",
+          landing_ja:"さあ始めよう HS ZERO",
+          landing_es:"¡Vamos HS ZERO!",
+          landing_zh:"开始吧 HS ZERO",
+          lang_en:"English",
+          lang_ar:"عربي",
+          lang_ja:"日本語",
+          lang_es:"Español",
+          lang_zh:"中文",
+          photo1:"8枚の国籍カードには、それぞれ取得に必要なレベルとパーセンテージが設定されています。プレイヤーは各ボックスから取得したい国籍を選択できます。", photo2:"アンダーワールドのコインには、通常のカルメル会コインと銅で覆われた銀のカルメル会コインがあり、ゲーム内でさまざまな目的で使用されます。", photo3:"地球内部のキャラクターやモンスターの開発に役立つ、ランダムに生成された都市の背景とツールが入ったボックス。", photo4:"地球内部のキャラクターやモンスターの開発に役立つ、ランダムに生成された都市の背景とツールが入ったボックス。",
+          photo5:"コレクションボックスにはすべての国籍のものが収められており、購入できるボックスの中で最大のサイズです。", photo6:"HS0 領主カードは 80 人以上のプレイヤーを必要とし、各プレイヤーがそのうちの 1 人とやり取りして 8 つの国籍の領主を獲得します。", photo7:"ランダムに生成された都市の背景と、キャラクターや地球外モンスターの開発に役立つツールが入ったボックス", photo8:"ランダムに生成された都市の背景と、キャラクターや地球外モンスターの開発に役立つツールが入ったボックス",
+          // Japanese translations for white box names - 40% smaller
+          karm_name: "<span style='font-size: 0.6em'>カームレート</span>",
+          giant_name: "<span style='font-size: 0.6em'>ソ連の巨人たち</span>",
+          barid_alive_name: "<span style='font-size: 0.6em'>埋もれた者たち</span>",
+          human_name: "<span style='font-size: 0.6em'>地表の人類</span>",
+          monsters_name: "<span style='font-size: 0.6em'>原始の錨</span>",
+          vamp_name: "<span style='font-size: 0.6em'>エコーストーカー</span>",
+          drwaf_name: "<span style='font-size: 0.6em'>担い手たち</span>",
+          spirits_name: "<span style='font-size: 0.6em'>精霊</span>",
+          // Japanese translations for descriptions (normal size)
+          karmlate_desc: "カームレートは封印された会議室と抹消された記録にのみ語られる存在であり、記録された記憶以前からダウンアースを支配してきた無性の主権階級である。見えないが絶対的で、その権威は王冠ではなく、通貨、配給コード、血の誓約を通じて流れる。彼らは公然と統治しない。彼らは計算し、市場、負債、そして生存そのものを操作し、すべてのトンネル、都市の中心、地表の残骸が経済的に彼らに依存し続けることを保証する。彼らは金銭の支配を通じて担い手たちを指揮し、力を隷属に縛り付け、秘密を通じて政府を縛る。なぜなら、まだ息づくすべての国は、カームレートの許可なくして、ダウンアースは一世代以内に飢饉と戦争に陥ると知っているからだ。",
+          spirit_desc: "精霊は死そのものの最終的な結果であり、引き裂かれて上へと漂う魂は、本能的に地表に向かって引き寄せられる。担い手たちは慈悲ではなく必要性からそれらを狩り、縛り付ける。制御されない精霊は、無法な人間や禁じられたカルト主義者の手で武器となるからだ。太陽地表の大災害以前に、カームレートは地球の政府と秘密の協定を結んだ。魂は地下に閉じ込められ、研究され、取引され、抑圧される。その見返りに沈黙と協力が得られる。死においても、生においても、何も制御から逃れることはできない。",
+          human_desc: "人類は壊れた太陽の難民である。地球の地表の広大な地域が燃え上がり、放射能が都市を死の領域に変えた時、人類はパニックと絶望の中で地下へ逃げた。地下生活は何十億人ものために意図されたものではなかったが、必要性は抵抗を粉砕した。人間として残った者たちは今、影に包まれたセクターに詰め込まれて暮らし、朽ち果てた技術と配給された光にしがみつき、二度と見ることのできない空の記憶に悩まされている。",
+          primordial_desc: "原始の錨は人々ではなく恐怖である——地球の最も深い傷と、空の向こうの場所から生まれた存在であり、国家よりも古く、生命に無関心な生き物だ。その存在は政府の断片とブラックボールト研究セルにのみ知られているが、その知識でさえカームレートの手を通じて濾過される。カームレートはすべてのデータを蓄え、真実を抑制し、無知を武器化する。なぜなら錨は単に研究されるだけではない——彼らは封じ込められており、もし彼らの束縛が失敗すれば、ダウンアースも地表も絶滅に溺れるだろうからだ。",
+          echo_desc: "エコーストーカーは、生存が捕食にねじれたときに残るものである。かつてはアトラス・プログラムの一部だったが、補給路が失敗し、官僚主義が慈悲よりも効率を選んだときに見捨てられた。最も深いセクターで飢えに苦しみ、彼らの体は残酷に適応した。皮膚は薄くなり核の熱を飲み、耳は石のマイルを通して心拍を追跡するために歪み、恐怖が理性に取って代わった場所に牙が生えた。彼らはもはや人間ではなく、市民でもなく、暗闇のハンターである——政府が見て見ぬふりをしたときに何が起こるかの生き証人だ。",
+          bearer_desc: "担い手たちはダウンアースの鉄の背骨であり、背丈は低いが不自然な強さで鍛えられ、機械が故障し人間が折れる場所で圧倒的な労働に耐えるように繁殖され条件付けられた。数え切れないほどの時代にわたり、彼らはカームレートと共に地表の下に住み、石から都市を彫り、遺物の機械を運び、世界の地殻そのものを安定させてきた。冷静で規律正しく、儀式的な服従に縛られた担い手たちは、彼らの役割を疑わない。なぜなら歴史そのものが、地下での生存は秩序を要求し、秩序は犠牲を要求することを彼らに教えてきたからだ。",
+          crazy_desc: "埋もれた者たちは焼け焦げ、壊れた者たちであり、地表の火災が彼らの肉を溶かし心を粉砕した後、死の淵から引きずり戻された。地表の生存者の間で生きるにはあまりに不安定だが、捨てるにはあまりに貴重だった彼らは、担い手たちによって地下に連れて行かれ、生きた道具としてカームレートに引き渡された。彼らの狂気は予測不可能で、暴力的で危険だが、その狂気の中には有用性がある——衝撃労働、消耗可能な執行、そして不服従が何を待ち受けるかのリマインダーだ。",
+          lack_desc: "ミッドアースの海は、惑星の内層の間に隠された封印された深淵であり、地球の傷ついた核によって駆動される、圧倒的な圧力と遅く暴力的な流れの光のない世界である。その中には不可能な規模の巨大な怪物が住み、その動きが上の土地を動かすことができる肉と鉱物の生きた要塞と、太陽も法も慈悲もなく生まれた小さな恐怖が共存している。これらの生態系は熱、腐敗、未知のエネルギーを餌にし、既知の進化すべてに反抗する。深淵の知識は政府によって消去され、カームレートによって封印される。なぜなら、その深みへの下降はすべて、損失、腐敗したデータ、または沈黙で終わるからだ。ミッドアースの海に眠るものは、古代の、異質な、そして忍耐強い——そしてもしそれが目覚めれば、地球のどの層も無傷ではいられなくなる。",
+          ussrgiant_desc: "ソ連の巨人たちは死んだ帝国の遺物兵士であり、無敵の戦士を作り出すことを意図した忘れられた注射プログラムの産物である。巨大化し、強化され、選択肢を剥奪された彼らは、ソ連崩壊が彼らを都合の悪い負債にしたときに捨てられた。地下に封印され、生きるのに十分なだけの食料を与えられ、彼らはどの旗にも忠実ではなく、生存だけに忠実であり、創造者よりも長生きした政治的実験のそびえ立つ残骸であり、今は世界の下で静かに待っている。",
+          // Card Creator Translations - Japanese
+          creator_title: "あなた自身の3Dカードを作成",
+          creator_description: "表と裏の画像をアップロードして、上記のカードと同じ効果を持つカスタム3Dカードを作成します",
+          upload_title: "画像をアップロード",
+          front_text: "表の画像をアップロードするにはクリック",
+          back_text: "裏の画像をアップロードするにはクリック",
+          front_label: "表の画像を選択",
+          back_label: "裏の画像を選択",
+          preview_title: "3Dプレビュー",
+          card_front_text: "表の画像",
+          card_back_text: "裏の画像",
+          flip_btn: "カードを裏返す",
+          reset_btn: "リセット",
+          save_btn: "カードを保存",
+          save_btn_disabled: "両方の画像をアップロードしてください",
+          instructions_title: "使い方:",
+          instructions_1: "表と裏の画像をアップロード（JPGまたはPNG）",
+          instructions_2: "「カードを裏返す」をクリックして3D効果を確認",
+          instructions_3: "カードをクリックすると自動的に裏返ります",
+          instructions_4: "カードの上にマウスを乗せると3D傾斜効果",
+          instructions_5: "準備ができたらカスタムカードを保存",
+          save_success: "カードが正常に保存されました！実際のアプリケーションでは、カスタムカードがギャラリーに保存されます。",
+          save_error: "まず表と裏の両方の画像をアップロードしてください。"
+        }},
+        es: { translation: { card0_title:"Humanos",
+card1_title:"Espíritus",
+card2_title:"Los Anclajes Primordiales",
+card3_title:"Karmlate",
+card4_title:"Los Acechadores del Eco",
+card5_title:"Los Enterrados",
+card6_title:"Gigantes de la URSS",
+card7_title:"Los Portadores",
+card8_title:"",
+card9_title:"",
+card10_title:"",
+card11_title:"",
+card12_title:"",
+card13_title:"",
+card14_title:"",
+card15_title:"",
+
+          welcomeTitle:"¡Bienvenido a nuestro juego de cartas!",
+          welcomeDescription:"¡Únete a nuestra comunidad de Discord y empieza a jugar hoy!",
+          close:"Cerrar",
+          landing_en:"Let's Go HS ZERO",
+          landing_ar:"هيا بنا HS ZERO",
+          landing_ja:"さあ始めよう HS ZERO",
+          landing_es:"¡Vamos HS ZERO!",
+          landing_zh:"开始吧 HS ZERO",
+          lang_en:"English",
+          lang_ar:"عربي",
+          lang_ja:"日本語",
+          lang_es:"Español",
+          lang_zh:"中文",
+          photo1:"Las cartas de 8 Nacionalidades constan de varios niveles y porcentajes para obtener cada una. El jugador puede elegir la nacionalidad que quiere obtener de cada casilla.", photo2:"Las monedas del Inframundo incluyen carmelitas normales y carmelitas de plata recubiertas de cobre, que se utilizan para diversos propósitos en el juego.", photo3:"Cajas que contienen fondos de ciudades generados aleatoriamente y herramientas para ayudar a desarrollar personajes y monstruos desde la Tierra.", photo4:"Cajas que contienen fondos de ciudades generados aleatoriamente y herramientas para ayudar a desarrollar personajes y monstruos desde la Tierra.",
+          photo5:"La caja de colección contiene todas las nacionalidades y es la caja más grande que se puede comprar.", photo6:"La tarjeta HS0 Lord requiere más de 80 jugadores, cada uno interactuando con uno de ellos para obtener un Lord de las 8 nacionalidades.", photo7:"Cajas que contienen fondos de ciudades generados aleatoriamente y herramientas para ayudar a desarrollar personajes y monstruos extraterrestres.", photo8:"Cajas que contienen fondos de ciudades generados aleatoriamente y herramientas para ayudar a desarrollar personajes y monstruos extraterrestres.",
+          // Spanish translations for white box names - 40% smaller
+          karm_name: "<span style='font-size: 0.6em'>Karmlate</span>",
+          giant_name: "<span style='font-size: 0.6em'>Los Gigantes Soviéticos</span>",
+          barid_alive_name: "<span style='font-size: 0.6em'>Los Enterrados Vivos</span>",
+          human_name: "<span style='font-size: 0.6em'>Los Humanos de la Superficie</span>",
+          monsters_name: "<span style='font-size: 0.6em'>Los Anclajes Primordiales</span>",
+          vamp_name: "<span style='font-size: 0.6em'>Los Acechadores del Eco</span>",
+          drwaf_name: "<span style='font-size: 0.6em'>Los Portadores</span>",
+          spirits_name: "<span style='font-size: 0.6em'>Los Espíritus</span>",
+          // Spanish translations for descriptions (normal size)
+          karmlate_desc: "Los Karmlate solo se mencionan en cámaras selladas y archivos censurados, una casta soberana sin género que ha gobernado la Tierra Baja desde antes de la memoria registrada, invisibles pero absolutos, su autoridad fluye a través de la moneda, códigos de racionamiento y juramentos de sangre en lugar de coronas. No gobiernan abiertamente; calculan, manipulan mercados, deudas y la supervivencia misma, asegurando que cada túnel, núcleo de ciudad y resto de superficie siga dependiendo económicamente de ellos. A través de su control del dinero ordenan a los Portadores, vinculando fuerza a servidumbre, y a través del secreto atan a los gobiernos, porque cada nación que aún respira sabe que sin la sanción Karmlate, la Tierra Baja colapsaría en hambruna y guerra dentro de una sola generación.",
+          spirit_desc: "Los Espíritus son la consecuencia final de la muerte misma, almas desgarradas y a la deriva hacia arriba, atraídas instintivamente hacia la superficie. Los Portadores los cazan y atan, no por misericordia sino por necesidad, porque los espíritus no controlados se convierten en armas en manos de humanos rebeldes y cultistas prohibidos. Antes de la catástrofe de la superficie solar, los Karmlate forjaron acuerdos secretos con los gobiernos de la Tierra: las almas serían contenidas abajo, estudiadas, comerciadas y suprimidas, a cambio de silencio y cooperación. En la muerte, como en la vida, nada escapa al control.",
+          human_desc: "Los Humanos son refugiados de un sol roto. Cuando vastas regiones de la superficie de la Tierra se encendieron y la radiación convirtió las ciudades en zonas de muerte, la humanidad huyó hacia abajo en pánico y desesperación. La vida subterránea nunca fue pensada para miles de millones, pero la necesidad aplastó la resistencia. Los que permanecen humanos ahora viven apiñados en sectores sombríos, aferrados a tecnología en descomposición y luz racionada, perseguidos por recuerdos de cielos que nunca volverán a ver.",
+          primordial_desc: "Los Anclajes Primordiales no son un pueblo sino un terror: entidades nacidas de las heridas más profundas de la Tierra y de lugares más allá del cielo mismo, criaturas más antiguas que las naciones e indiferentes a la vida. Su existencia solo es conocida por fragmentos de gobiernos y células de investigación de bóvedas negras, pero incluso ese conocimiento es filtrado por manos Karmlate. Los Karmlate atesoran todos los datos, suprimiendo verdades, utilizando la ignorancia como arma, porque los Anclajes no son meramente estudiados: están contenidos, y si sus ataduras alguna vez fallaran, tanto la Tierra Baja como la superficie se ahogarían en la extinción.",
+          echo_desc: "Los Acechadores del Eco son lo que queda cuando la supervivencia se retuerce en depredación. Una vez parte del Programa Atlas, fueron abandonados cuando las líneas de suministro fallaron y la burocracia eligió eficiencia sobre misericordia. Hambrientos en los sectores más profundos, sus cuerpos se adaptaron brutalmente: la piel se adelgazó para beber el calor del núcleo, los oídos se deformaron para rastrear latidos a través de millas de piedra, y los colmillos crecieron donde el miedo reemplazó a la razón. Ya no son humanos, ya no son ciudadanos, sino cazadores en la oscuridad: prueba viviente de lo que sucede cuando los gobiernos miran hacia otro lado.",
+          bearer_desc: "Los Portadores son la columna vertebral de hierro de la Tierra Baja, bajos de estatura pero forjados con fuerza sobrenatural, criados y condicionados para soportar trabajos aplastantes donde las máquinas fallan y los hombres se rompen. Durante innumerables edades han vivido bajo la superficie junto a los Karmlate, tallando ciudades en piedra, transportando máquinas reliquia y estabilizando la misma corteza del mundo. Calmos, disciplinados y ligados por obediencia ritual, los Portadores no cuestionan su papel, porque la historia misma les ha enseñado que la supervivencia abajo exige orden, y el orden exige sacrificio.",
+          crazy_desc: "Los Enterrados Vivos son los quemados y rotos, arrastrados de vuelta del borde de la muerte después de que los incendios de superficie derritieran su carne y destrozaran sus mentes. Demasiado inestables para vivir entre los supervivientes de superficie pero demasiado valiosos para descartar, fueron llevados abajo por los Portadores y entregados a los Karmlate como herramientas vivientes. Su locura los hace impredecibles, violentos y peligrosos, pero en su locura reside la utilidad: trabajo de choque, aplicación desechable y recordatorios de lo que espera a la desobediencia.",
+          lack_desc: "El océano de la Tierra Media es un abismo sellado escondido entre las capas internas del planeta, un mundo sin luz de presión aplastante y corrientes lentas y violentas impulsadas por el núcleo herido de la Tierra misma. Dentro de él habitan monstruos colosales de escala imposible, fortalezas vivientes de carne y mineral cuyo movimiento puede desplazar la tierra superior, junto con horrores menores nacidos sin sol, ley o misericordia. Estos ecosistemas se alimentan de calor, descomposición y energías desconocidas, desafiando toda evolución conocida. El conocimiento del abismo es borrado por gobiernos y sellado por los Karmlate, porque cada descenso a sus profundidades termina en pérdida, datos corruptos o silencio. Lo que duerme en el Océano de la Tierra Media es antiguo, extraño y paciente: y si alguna vez se levanta, ninguna capa de la Tierra permanecerá intacta.",
+          ussrgiant_desc: "Los Gigantes Soviéticos son soldados reliquia de un imperio muerto, productos de un programa de inyección olvidado destinado a crear guerreros invencibles. Agrandados, fortalecidos y despojados de elección, fueron descartados cuando el colapso soviético los convirtió en pasivos inconvenientes. Sellados bajo tierra, alimentados solo lo suficiente para vivir, permanecen leales a ninguna bandera, solo a la supervivencia, restos imponentes de un experimento político que sobrevivió a sus creadores y ahora espera en silencio bajo el mundo.",
+          // Card Creator Translations - Spanish
+          creator_title: "Crea Tu Propia Tarjeta 3D",
+          creator_description: "Sube imágenes frontal y trasera para crear una tarjeta 3D personalizada con los mismos efectos que las tarjetas anteriores",
+          upload_title: "Subir Imágenes",
+          front_text: "Haz clic para subir imagen frontal",
+          back_text: "Haz clic para subir imagen trasera",
+          front_label: "Elegir Imagen Frontal",
+          back_label: "Elegir Imagen Trasera",
+          preview_title: "Vista Previa 3D",
+          card_front_text: "Imagen Frontal",
+          card_back_text: "Imagen Trasera",
+          flip_btn: "Voltear Tarjeta",
+          reset_btn: "Reiniciar",
+          save_btn: "Guardar Tarjeta",
+          save_btn_disabled: "Sube Ambas Imágenes Primero",
+          instructions_title: "Cómo usar:",
+          instructions_1: "Sube imágenes frontal y trasera (JPG o PNG)",
+          instructions_2: 'Haz clic en "Voltear Tarjeta" para ver el efecto 3D',
+          instructions_3: "Haz clic en la tarjeta para voltearla automáticamente",
+          instructions_4: "Pasa el cursor sobre la tarjeta para el efecto de inclinación 3D",
+          instructions_5: "Guarda tu tarjeta personalizada cuando esté lista",
+          save_success: "¡Tarjeta guardada exitosamente! En una aplicación real, esto guardaría tu tarjeta personalizada en la galería.",
+          save_error: "Por favor, sube ambas imágenes frontal y trasera primero."
+        }},
+        zh: { translation: { card0_title:"人类",
+card1_title:"灵魂",
+card2_title:"原始之锚",
+card3_title:"卡尔姆莱特",
+card4_title:"回声潜行者",
+card5_title:"被埋葬者",
+card6_title:"苏联巨人",
+card7_title:"承载者",
+card8_title:"",
+card9_title:"",
+card10_title:"",
+card11_title:"",
+card12_title:"",
+card13_title:"",
+card14_title:"",
+card15_title:"",
+
+          welcomeTitle:"欢迎来到我们的卡牌游戏！",
+          welcomeDescription:"加入我们的 Discord 社区，今天就开始玩吧！",
+          close:"关闭",
+          landing_en:"Let's Go HS ZERO",
+          landing_ar:"هيا بنا HS ZERO",
+          landing_ja:"さあ始めよう HS ZERO",
+          landing_es:"¡Vamos HS ZERO!",
+          landing_zh:"开始吧 HS ZERO",
+          lang_en:"English",
+          lang_ar:"عربي",
+          lang_ja:"日本語",
+          lang_es:"Español",
+          lang_zh:"中文",
+          photo1:"8张国籍卡牌包含多个等级，每种等级和等级都有相应的获取概率。玩家可以从每个卡牌盒中选择想要获得的国籍卡牌。", photo2:"冥界硬币包括普通的卡梅尔硬币和镀铜的银卡梅尔硬币，它们在游戏中用于各种用途。", photo3:"盒子里装着随机生成的城市背景和工具，可以帮助玩家从地球内部创造角色和怪物。", photo4:"盒子里装着随机生成的城市背景和工具，可以帮助玩家从地球内部创造角色和怪物。",
+          photo5:"这个捐款箱包含了所有国籍的捐款，是目前可以买到的最大捐款箱。", photo6:"HS0 领主卡需要 80 多名玩家，每位玩家与其中一位互动，才能从 8 个国家中获得一位领主。", photo7:"包含随机生成的城市背景和用于帮助设计角色和外星怪物的工具的盒子", photo8:"包含随机生成的城市背景和用于帮助设计角色和外星怪物的工具的盒子",
+          // Chinese translations for white box names - 40% smaller
+          karm_name: "<span style='font-size: 0.6em'>卡尔姆莱特</span>",
+          giant_name: "<span style='font-size: 0.6em'>苏联巨人</span>",
+          barid_alive_name: "<span style='font-size: 0.6em'>被埋葬者</span>",
+          human_name: "<span style='font-size: 0.6em'>地表人类</span>",
+          monsters_name: "<span style='font-size: 0.6em'>原始之锚</span>",
+          vamp_name: "<span style='font-size: 0.6em'>回声潜行者</span>",
+          drwaf_name: "<span style='font-size: 0.6em'>承载者</span>",
+          spirits_name: "<span style='font-size: 0.6em'>灵魂</span>",
+          // Chinese translations for descriptions (normal size)
+          karmlate_desc: "卡尔姆莱特只在密封的密室和被删改的档案中被提及，是一个无性别的统治种姓，在有记载的记忆之前就统治着下地界，看不见却绝对，他们的权威不是通过王冠，而是通过货币、配给代码和血誓来流动。他们不公开统治；他们计算，操纵市场、债务和生存本身，确保每条隧道、每个城市核心和每个地表遗迹在经济上都依赖他们。通过他们对金钱的控制，他们指挥承载者，将力量束缚于奴役；通过秘密，他们束缚政府，因为每一个仍在呼吸的国家都知道，没有卡尔姆莱特的批准，下地界将在一代人之内陷入饥荒和战争。",
+          spirit_desc: "灵魂是死亡本身的最终后果，灵魂被撕裂并向上漂移，本能地被吸引向地表。承载者猎捕并束缚它们，不是出于仁慈而是必要，因为不受控制的灵魂会成为不法人类和被禁止的邪教信徒手中的武器。在地表太阳灾难之前，卡尔姆莱特与地球各国政府缔结了秘密协议：灵魂将被封存在地下，进行研究、交易和压制，以换取沉默与合作。在死亡中，如同在生命中，没有什么能逃脱控制。",
+          human_desc: "人类是破碎太阳的难民。当地球表面的广大区域被点燃，辐射将城市变成死亡区域时，人类在恐慌和绝望中向下逃亡。地下生活从未为数十亿人设计，但必要性压垮了抵抗。那些仍然保持人性的人现在拥挤在阴暗的区域，紧抓着衰败的技术和配给的光线，被他们再也见不到的天空的记忆所困扰。",
+          primordial_desc: "原始之锚不是人民而是恐怖——诞生于地球最深的创伤和天空本身之外的地方的实体，比国家更古老、对生命漠不关心的生物。它们的存在只有政府的片段和黑库研究小组知道，但即使是这些知识也经过卡尔姆莱特之手过滤。卡尔姆莱特囤积所有数据，压制真相，将无知武器化，因为锚不仅仅是研究——它们是被收容的，如果它们的束缚失效，下地界和地表都将陷入灭绝。",
+          echo_desc: "回声潜行者是当生存扭曲为捕食时所剩下的东西。他们曾是阿特拉斯计划的一部分，但在补给线失败、官僚机构选择效率而非仁慈时被遗弃。在最深的区域挨饿，他们的身体残酷地适应了：皮肤变薄以吸收地核的热量，耳朵变形以追踪数英里石头外的心跳，牙齿在恐惧取代理性的地方生长。他们不再是人类，不再是公民，而是黑暗中的猎人——政府视而不见时会发生什么的活证据。",
+          bearer_desc: "承载者是下地界的铁脊梁，身材矮小但被锻造出超自然的力量，被繁殖和训练以承受机械失效、人类崩溃的压倒性劳动。无数世纪以来，他们与卡尔姆莱特一起生活在地下，从石头中雕刻城市，拖运遗迹机器，稳定世界的地壳本身。冷静、守纪律、受仪式性服从约束的承载者不质疑他们的角色，因为历史本身教会他们：地下生存需要秩序，而秩序需要牺牲。",
+          crazy_desc: "被埋葬者是烧焦和破碎的人，在地表大火融化他们的肉体、粉碎他们的心智之后，从死亡边缘被拖回。太不稳定无法在地表幸存者中生活，但太有价值无法丢弃，他们被承载者带到地下，作为活工具交给卡尔姆莱特。他们的疯狂使他们不可预测、暴力和危险，但在他们的疯狂中存在着用处——冲击劳动、消耗性执法，以及对不服从后果的提醒。",
+          lack_desc: "中地界的海洋是隐藏在行星内层之间的封闭深渊，是一个由地球受伤的核心驱动的、充满压倒性压力和缓慢而猛烈水流的光明世界。其中居住着规模不可能的庞然大物，肉体和矿物的活堡垒，其运动可以移动上方的土地，以及没有太阳、法律或慈悲而诞生的较小恐怖。这些生态系统以热量、腐烂和未知能量为食，挑战所有已知的进化。深渊的知识被政府抹去，被卡尔姆莱特封存，因为每一次深入其深处都以损失、损坏的数据或沉默告终。沉睡在中地界海洋中的东西是古老的、外来的、耐心的——如果它有一天升起，地球的每一层都将无法幸免。",
+          ussrgiant_desc: "苏联巨人是已死帝国的遗迹士兵，一个被遗忘的注射计划的产物，旨在创造无敌的战士。被放大、强化和剥夺选择权，当苏联解体使他们成为不便的负担时被丢弃。被封印在地下，仅获足够的食物生存，他们不效忠于任何旗帜，只效忠于生存，是一个比其创造者更持久的政治实验的高耸遗迹，现在在世界之下沉默等待。",
+          // Card Creator Translations - Chinese
+          creator_title: "创建您自己的3D卡片",
+          creator_description: "上传正面和背面图像，创建具有与上述卡片相同效果的自定义3D卡片",
+          upload_title: "上传图像",
+          front_text: "点击上传正面图像",
+          back_text: "点击上传背面图像",
+          front_label: "选择正面图像",
+          back_label: "选择背面图像",
+          preview_title: "3D预览",
+          card_front_text: "正面图像",
+          card_back_text: "背面图像",
+          flip_btn: "翻转卡片",
+          reset_btn: "重置",
+          save_btn: "保存卡片",
+          save_btn_disabled: "请先上传两张图像",
+          instructions_title: "使用方法：",
+          instructions_1: "上传正面和背面图像（JPG或PNG）",
+          instructions_2: '点击"翻转卡片"查看3D效果',
+          instructions_3: "点击卡片自动翻转",
+          instructions_4: "悬停在卡片上获得3D倾斜效果",
+          instructions_5: "准备好后保存您的自定义卡片",
+          save_success: "卡片保存成功！在实际应用中，这将把您的自定义卡片保存到图库中。",
+          save_error: "请先上传正面和背面两张图像。"
+        }}
+      }
+    });
+
+    function applyTranslations(){
+      document.getElementById('welcome-title').innerText = i18next.t('welcomeTitle');
+      document.getElementById('welcome-description').innerText = i18next.t('welcomeDescription');
+      document.getElementById('modal-close').innerText = i18next.t('close');
+
+      document.getElementById('landing-en').innerText = i18next.t('landing_en');
+      document.getElementById('landing-ar').innerText = i18next.t('landing_ar');
+      document.getElementById('landing-ja').innerText = i18next.t('landing_ja');
+      document.getElementById('landing-es').innerText = i18next.t('landing_es');
+      document.getElementById('landing-zh').innerText = i18next.t('landing_zh');
+
+      document.getElementById('lang-en').innerText = i18next.t('lang_en');
+      document.getElementById('lang-ar').innerText = i18next.t('lang_ar');
+      document.getElementById('lang-ja').innerText = i18next.t('lang_ja');
+      document.getElementById('lang-es').innerText = i18next.t('lang_es');
+      document.getElementById('lang-zh').innerText = i18next.t('lang_zh');
+
+      if (window.__openModalIndex) {
+        document.getElementById('modal-title').innerText = i18next.t(`photo${window.__openModalIndex}`) || "Info";
+        document.getElementById('modal-content').innerText = i18next.t(`photo${window.__openModalIndex}`) || "Info";
+      }
+
+      // Update PNG descriptions when language changes
+      updatePNGDescriptions();
+      
+      // Update card creator translations
+      updateCardCreatorTranslations();
+    }
+
+    function updatePNGDescriptions() {
+      // Update all description boxes - use innerHTML to preserve span tags
+      const currentLang = i18next.language;
+      
+      // For all languages, use innerHTML to preserve the <span> tags with font-size for names
+      // But descriptions remain normal size
+      document.getElementById('karmlate-desc').innerText = i18next.t('karmlate_desc');
+      document.getElementById('spirit-desc').innerText = i18next.t('spirit_desc');
+      document.getElementById('human-desc').innerText = i18next.t('human_desc');
+      document.getElementById('primordial-desc').innerText = i18next.t('primordial_desc');
+      document.getElementById('echo-desc').innerText = i18next.t('echo_desc');
+      document.getElementById('bearer-desc').innerText = i18next.t('bearer_desc');
+      document.getElementById('crazy-desc').innerText = i18next.t('crazy_desc');
+      document.getElementById('lack-desc').innerText = i18next.t('lack_desc');
+      document.getElementById('ussrgiant-desc').innerText = i18next.t('ussrgiant_desc');
+    }
+    
+    function updateCardCreatorTranslations() {
+      // Update all card creator elements
+      document.getElementById('creator-title').innerText = i18next.t('creator_title');
+      document.getElementById('creator-description').innerText = i18next.t('creator_description');
+      document.getElementById('upload-title').innerText = i18next.t('upload_title');
+      document.getElementById('frontText').innerText = i18next.t('front_text');
+      document.getElementById('backText').innerText = i18next.t('back_text');
+      document.getElementById('frontLabel').innerText = i18next.t('front_label');
+      document.getElementById('backLabel').innerText = i18next.t('back_label');
+      document.getElementById('preview-title').innerText = i18next.t('preview_title');
+      document.getElementById('cardFrontText').innerText = i18next.t('card_front_text');
+      document.getElementById('cardBackText').innerText = i18next.t('card_back_text');
+      document.getElementById('flipBtn').innerText = i18next.t('flip_btn');
+      document.getElementById('resetBtn').innerText = i18next.t('reset_btn');
+      
+      // Update save button text based on state
+      const saveBtn = document.getElementById('saveBtn');
+      if (saveBtn.disabled) {
+        saveBtn.innerText = i18next.t('save_btn_disabled');
+      } else {
+        saveBtn.innerText = i18next.t('save_btn');
+      }
+      
+      // Update instructions
+      document.getElementById('instructions-title').innerText = i18next.t('instructions_title');
+      const instructionsList = document.getElementById('instructions-list');
+      instructionsList.innerHTML = `
+        <li>${i18next.t('instructions_1')}</li>
+        <li>${i18next.t('instructions_2')}</li>
+        <li>${i18next.t('instructions_3')}</li>
+        <li>${i18next.t('instructions_4')}</li>
+        <li>${i18next.t('instructions_5')}</li>
+      `;
+    }
+
+    function changeLanguage(lang){
+      i18next.changeLanguage(lang).then(() => {
+        applyTranslations();
+        if (window.app && window.app.$children) {
+          window.app.$children.forEach((card, index) => {
+            card.titleKey = `card${index}_title`;
+            card.contentKey = `card${index}_content`;
+          });
+        }
+        // Update white box name when language changes
+        if (window.__currentWhite && window.__currentWhite.nameKey) {
+          updateWhiteBoxNamesForCurrentLand();
+        }
+      });
+    }
+
+    function selectLanguage(lang){
+      changeLanguage(lang);
+      document.getElementById('landingOverlay').style.display = 'none';
+    }
+
+    function openModal(index){
+      window.__openModalIndex = index;
+      document.getElementById('modal-title').innerText = i18next.t(`photo${index}`) || "Info";
+      document.getElementById('modal-content').innerText = i18next.t(`photo${index}`) || "Info";
+      document.getElementById('modal').style.display = 'block';
+      document.getElementById('overlay').style.display = 'block';
+    }
+
+    function closeModal(){
+      window.__openModalIndex = null;
+      document.getElementById('modal').style.display = 'none';
+      document.getElementById('overlay').style.display = 'none';
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      applyTranslations();
+    });
+  </script>
+<script>
+  /* =========================
+     WEEKDAY GIF STRIP LOGIC
+     Files: saturday.gif ... friday.gif
+     Order: saturday, sunday, monday, tuesday, wednesday, thursday, friday
+  ========================= */
+
+  const WEEKDAYS = ["saturday","sunday","monday","tuesday","wednesday","thursday","friday"];
+
+  function jsDayToOurIndex(jsDay){
+    // JS: 0=Sunday ... 6=Saturday
+    // Our: 0=Saturday ... 6=Friday
+    return (jsDay === 6) ? 0 : (jsDay + 1);
+  }
+
+  function buildWeekdayStrip(centerIndex){
+    const wrap = (n) => (n + 7) % 7;
+    const host = document.getElementById("weekdayStrip");
+    if(!host) return;
+
+    host.innerHTML = "";
+
+    // offsets: -3, -2, -1, 0, +1, +2, +3
+    for(let offset = -3; offset <= 3; offset++){
+      const dayIndex = wrap(centerIndex + offset);
+      const dayName = WEEKDAYS[dayIndex];
+
+      const img = document.createElement("img");
+      img.className = "day-gif" + (offset === 0 ? " is-center" : "");
+      img.alt = dayName;
+      img.src = encodeURI(dayName + ".gif");
+
+      // Opacity: center 1 -> edges 0
+      // abs=0 => 1.00
+      // abs=1 => 0.66
+      // abs=2 => 0.33
+      // abs=3 => 0.00
+      const a = Math.abs(offset);
+      const opacity = Math.max(0, 1 - (a / 3));
+      img.style.opacity = String(opacity);
+
+      host.appendChild(img);
+    }
+  }
+
+  function initWeekdayStrip(){
+    const now = new Date();
+    const center = jsDayToOurIndex(now.getDay());
+    buildWeekdayStrip(center);
+  }
+
+  // Keep it correct if the tab stays open over midnight
+  function startWeekdayStripAutoRefresh(){
+    let last = new Date().getDay();
+    setInterval(() => {
+      const d = new Date().getDay();
+      if(d !== last){
+        last = d;
+        initWeekdayStrip();
+      }
+    }, 60_000); // check every minute
+  }
+
+  // Add this into your existing DOMContentLoaded block OR keep it as-is:
+  document.addEventListener("DOMContentLoaded", () => {
+    initWeekdayStrip();
+    startWeekdayStripAutoRefresh();
+  });
+</script>
+
+  <script>
+    Vue.config.devtools = true;
+    Vue.component('card', {
+      props: ['dataImage','titleKey','contentKey','index'],
+      template: `
+        <div class="card-wrap"
+             @mousemove="handleMouseMove"
+             @mouseenter="handleMouseEnter"
+             @mouseleave="handleMouseLeave"
+             ref="card">
+          <div class="card" :style="cardStyle">
+            <div class="card-bg" :class="{ 'black-image': isBlack }" :style="cardBgImage"></div>
+            <div class="card-back" :style="cardBackImage"></div>
+            <div class="card-info">
+              <h1>{{ i18next.t(titleKey) }}</h1>
+<!-- <p>{{ i18next.t(contentKey) }}</p> -->
+            </div>
+            </div>
+        </div>`,
+      mounted(){
+        this.width = this.$refs.card.offsetWidth;
+        this.height = this.$refs.card.offsetHeight;
+      },
+      data:() => ({
+        width:0,height:0,
+        mouseX:0,mouseY:0,
+        mouseLeaveDelay:null,
+        isBlack:false,
+        isFlipped:false,
+        alternateImages:[
+          '2026.png','2027.png','2028.png','2029.png',
+          '2030.png','2031.png','2032.png','2033.png',
+          'WW1.png','WW2.png','WW3.png','WW4.png',
+          'WW5.png','WW6.png','WW7.png','WW8.png'
+        ]
+      }),
+      computed:{
+        i18next(){ return window.i18next; },
+        mousePX(){ return this.mouseX / this.width; },
+        mousePY(){ return this.mouseY / this.height; },
+        cardStyle(){
+          const rX = this.mousePX * 30;
+          const rY = this.mousePY * -30;
+          return { transform:`rotateY(${rX}deg) rotateX(${rY}deg)` };
+        },
+        cardBgImage(){
+          const backImage = this.alternateImages[this.index] || this.alternateImages[0];
+          return { backgroundImage:`url(${this.isFlipped ? backImage : this.dataImage})` };
+        },
+        cardBackImage(){
+          const backImage = this.alternateImages[this.index] || this.alternateImages[0];
+          return { backgroundImage:`url(${this.isFlipped ? this.dataImage : backImage})` };
+        }
+      },
+      methods:{
+        handleMouseMove(e){
+          this.mouseX = e.pageX - this.$refs.card.offsetLeft - this.width/2;
+          this.mouseY = e.pageY - this.$refs.card.offsetTop - this.height/2;
+        },
+        handleMouseEnter(){ clearTimeout(this.mouseLeaveDelay); },
+        handleMouseLeave(){
+          this.mouseLeaveDelay = setTimeout(()=>{ this.mouseX=0; this.mouseY=0; },1000);
+        }
+      }
+    });
+  </script>
+
+  <script>
+    window.app = new Vue({
+      el:'#app',
+      methods:{
+        toggleCard(index){
+          const cards = this.$children;
+          if(cards[index]) cards[index].isFlipped = !cards[index].isFlipped;
+        }
+      }
+    });
+  </script>
+
+  <!-- NEW: Animated Cards Flow Script - FIXED SOUND SYSTEM -->
+  <script>
+    // FIXED: Card images and sounds mapping with correct sound filenames
+    // Key fixes:
+    // 1. Sound files should have EXACTLY the same name as image files (without .png extension)
+    // 2. For files with spaces, the sound file should also have the same spaces
+
+    const CARD_DATA = [
+      // First 10 cards with exact name matching
+      { img: "2000.png", sound: "2000.mp3" },
+      { img: "3333.png", sound: "3333.mp3" },
+      { img: "pishtaco.png", sound: "pishtaco.mp3" },
+     { img: "impudulu.png", sound: "impundulu.mp3" },
+      { img: "lauma.png", sound: "lauma.mp3" },
+      { img: "shtriga.png", sound: "shtriga.mp3" },
+      { img: "3657.png", sound: "3657.mp3" }, // FIXED: Sound file should be 3657.mp3
+      { img: "strigoi.png", sound: "strigoi.mp3" },
+      { img: "kludde.png", sound: "kludde.mp3" },
+      { img: "saci.png", sound: "saci.mp3" },
+      
+      // Files with spaces - sound files should have same spaces
+      { img: "lion shisa stock.png", sound: "lion shisa stock.mp3" },
+      { img: "redcap.png", sound: "redcap.mp3" },
+      { img: "vodnik.png", sound: "vodnik.mp3" },
+      { img: "dokkaebis.png", sound: "dokkaebis.mp3" },
+      { img: "wending.png", sound: "wending.mp3" },
+      { img: "madagascar tree.png", sound: "madagascar tree.mp3" },
+      { img: "manananggal.png", sound: "manananggal.mp3" },
+      { img: "adze.png", sound: "adze.mp3" },
+      { img: "la sayona.png", sound: "la sayona.mp3" },
+      { img: "bauk.png", sound: "bauk.mp3" },
+      
+      // More cards with exact matching
+      { img: "3598.png", sound: "3598.mp3" },
+      { img: "4586.png", sound: "4586.mp3" },
+      { img: "bigfoot.png", sound: "bigfoot.mp3" },
+      { img: "krampus.png", sound: "krampus.mp3" },
+      { img: "pichal peri.png", sound: "pichal peri.mp3" },
+      { img: "chupacabra.png", sound: "chupacabra.mp3" },
+      { img: "el hombre caiman.png", sound: "el hombre caiman.mp3" },
+      { img: "ninki nank.png", sound: "ninki nank.mp3" },
+      { img: "el sombreron.png", sound: "el sombreron.mp3" },
+      { img: "la llorona.png", sound: "la llorona.mp3" },
+      
+      // Final cards
+      { img: "bunyip.png", sound: "bunyip.mp3" },
+      { img: "troller.png", sound: "troller.mp3" },
+      { img: "kanppa.png", sound: "kanppa.mp3" },
+      { img: "samodiva.png", sound: "samodiva.mp3" },
+      { img: "5635.png", sound: "5635.mp3" },
+      { img: "101.png", sound: "101.mp3" },
+      { img: "066.png", sound: "066.mp3" },
+      { img: "siguanaba.png", sound: "siguanaba.mp3" }, // FIXED: Sound file should be siguanaba.mp3
+      { img: "pegasus.png", sound: "pegasus.mp3" },
+      { img: "yeti.png", sound: "yeti.mp3" },
+      { img: "lupo manaro.png", sound: "lupo manaro.mp3" },
+      { img: "el coco.png", sound: "el coco.mp3" },
+      { img: "nian.png", sound: "nian.mp3" },
+      { img: "popobawa.png", sound: "popobawa.mp3" }, // FIXED: Sound file should be popobawa.mp3
+      { img: "ghoul.png", sound: "ghoul.mp3" }
+    ];
+
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const choice = arr => arr[Math.floor(Math.random() * arr.length)];
+
+    // Function to create a card element - FIXED URL encoding
+    function createCardElement(cardData) {
+      const card = document.createElement('div');
+      card.className = 'flow-card';
+      
+      const img = document.createElement('img');
+      // FIX: Properly encode image URLs with spaces
+      const encodedSrc = encodeURI(cardData.img);
+      img.src = encodedSrc;
+      img.alt = cardData.img.replace('.png', '');
+      
+      // FIX: Use the exact sound filename from the card data
+      const encodedSound = encodeURI(cardData.sound);
+      
+      card.appendChild(img);
+      card.dataset.src = encodedSrc;
+      card.dataset.sound = encodedSound;
+      card.dataset.name = cardData.img.replace('.png', '');
+      
+      // Add click event
+      card.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const src = this.dataset.src;
+        const sound = this.dataset.sound;
+        const name = this.dataset.name;
+        
+        console.log("Clicked card:", name, "Sound:", sound); // Debug
+        
+        // Play sound
+        playSound(sound, name);
+        
+        // Add pop effect
+        this.classList.add('pop');
+        setTimeout(() => this.classList.remove('pop'), 500);
+        
+        // Show modal
+        showModal(src);
+      });
+      
+      return card;
+    }
+
+    // FIXED: Sound playing function with better error handling
+    function playSound(soundFile, cardName) {
+      console.log("Attempting to play sound for", cardName + ":", soundFile); // Debug
+      
+      // Stop any currently playing sound
+      if (currentPlayingSound) {
+        currentPlayingSound.pause();
+        currentPlayingSound.currentTime = 0;
+      }
+      
+      const audio = new Audio(soundFile);
+      audio.volume = 1.0;
+      
+      // FIX: Add error handling for sound loading
+      audio.addEventListener('error', function(e) {
+        console.error("Error loading audio:", soundFile, "for card:", cardName);
+        console.log("Error details:", e);
+        
+        // Try alternative approach - maybe the file is in a different location
+        const altSoundFile = soundFile.replace(/\.mp3$/, '.wav');
+        console.log("Trying alternative sound file:", altSoundFile);
+        
+        const altAudio = new Audio(altSoundFile);
+        altAudio.volume = 1.0;
+        altAudio.play().catch(e2 => {
+          console.log("Alt audio play failed:", e2);
+          // If still fails, try without encoding
+          const rawSoundFile = decodeURI(soundFile);
+          console.log("Trying raw sound file:", rawSoundFile);
+          const rawAudio = new Audio(rawSoundFile);
+          rawAudio.volume = 1.0;
+          rawAudio.play().catch(e3 => console.log("Raw audio play failed:", e3));
+          currentPlayingSound = rawAudio;
+        });
+        currentPlayingSound = altAudio;
+      });
+      
+      audio.addEventListener('canplaythrough', function() {
+        console.log("Audio can play through for:", cardName);
+      });
+      
+      audio.addEventListener('loadeddata', function() {
+        console.log("Audio loaded for:", cardName);
+      });
+      
+      const playPromise = audio.play();
+      
+      if (playPromise !== undefined) {
+        playPromise.catch(e => {
+          console.log("Audio play failed initially for", cardName + ":", e);
+          // Try one more time with a small delay
+          setTimeout(() => {
+            audio.currentTime = 0;
+            audio.play().catch(e2 => console.log("Second attempt failed for", cardName + ":", e2));
+          }, 100);
+        });
+      }
+      
+      currentPlayingSound = audio;
+    }
+
+    // Function to populate lanes with cards - UPDATED for 3 separate lanes
+    function populateLanes() {
+      const lanes = [
+        { element: document.getElementById('laneTop'), count: 12 },
+        { element: document.getElementById('laneMiddle'), count: 10 },
+        { element: document.getElementById('laneBottom'), count: 14 }
+      ];
+      
+      lanes.forEach(lane => {
+        lane.element.innerHTML = '';
+        
+        // Shuffle card data for this lane
+        const shuffled = [...CARD_DATA].sort(() => Math.random() - 0.5);
+        
+        // Create duplicates for seamless scrolling (2 sets)
+        for (let set = 0; set < 2; set++) {
+          shuffled.slice(0, lane.count).forEach(cardData => {
+            lane.element.appendChild(createCardElement(cardData));
+          });
+        }
+      });
+    }
+
+    // Function to show modal
+    function showModal(imageSrc) {
+      document.getElementById('cardsModalImg').src = imageSrc;
+      document.getElementById('cardsModal').classList.add('open');
+    }
+
+    // Function to hide modal
+    function hideModal() {
+      document.getElementById('cardsModal').classList.remove('open');
+      
+      // Stop any playing sound
+      if (currentPlayingSound) {
+        currentPlayingSound.pause();
+        currentPlayingSound.currentTime = 0;
+        currentPlayingSound = null;
+      }
+    }
+
+    let currentPlayingSound = null;
+    let animatedCardsInitialized = false;
+    let earthCardsTimer = null;
+
+    function initAnimatedCardsFlow() {
+      if (animatedCardsInitialized) return;
+      
+      // Populate the lanes with cards
+      populateLanes();
+      
+      animatedCardsInitialized = true;
+
+      // Clear any existing timer
+      if (earthCardsTimer) {
+        clearTimeout(earthCardsTimer);
+      }
+
+      // Show animated cards after 10 seconds
+      earthCardsTimer = setTimeout(() => {
+        document.body.classList.add("show-cards-lanes");
+        document.getElementById('cardsBg').style.display = 'block';
+        document.getElementById('cardsHint').style.display = 'block';
+        
+        // Make sure the lanes are visible
+        document.getElementById('cardsLanes').style.display = 'block';
+        
+        // Debug: Log all card elements
+        console.log("Cards initialized, total cards:", 
+          document.querySelectorAll('.flow-card').length);
+          
+        // Debug: List all cards and their sound mappings
+        document.querySelectorAll('.flow-card').forEach((card, index) => {
+          const name = card.dataset.name;
+          const sound = card.dataset.sound;
+          console.log(`Card ${index + 1}: ${name} -> Sound: ${sound}`);
+        });
+      }, 10000);
+    }
+
+    // Modal close on backdrop click
+    document.getElementById('cardsBackdrop').addEventListener('click', hideModal);
+    document.getElementById('cardsModalCard').addEventListener('click', hideModal);
+    
+    // Escape key closes modal
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && document.getElementById('cardsModal').classList.contains('open')) {
+        hideModal();
+      }
+    });
+
+// ===== EARTH OPEN / CLOSE (FIXED) =====
+const earthViewerEl = document.getElementById("earthViewer");
+const earthVideoEl  = document.getElementById("earthVideo");
+const heroEarthHitEl = document.getElementById("heroEarthHit");
+
+// click the Earth (gif) -> open fullscreen video
+if (heroEarthHitEl) {
+  heroEarthHitEl.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    openEarth();
+  }, true);
+}
+
+function openEarth(){
+  if(!earthViewerEl) return;
+
+  earthViewerEl.classList.add("active");
+  earthViewerEl.setAttribute("aria-hidden","false");
+
+  // make sure video starts (some browsers need play() call)
+  if (earthVideoEl) {
+    try {
+      earthVideoEl.currentTime = 0;
+      earthVideoEl.play().catch(()=>{});
+    } catch(_) {}
+  }
+
+  // keep your existing behavior
+  initAnimatedCardsFlow();
+}
+
+function closeEarth(){
+  if(!earthViewerEl) return;
+
+  earthViewerEl.classList.remove("active");
+  earthViewerEl.setAttribute("aria-hidden","true");
+
+  // stop video
+  if (earthVideoEl) {
+    try { earthVideoEl.pause(); } catch(_) {}
+  }
+
+  // keep your existing behavior (your code already has this part below)
+  document.body.classList.remove("show-cards-lanes");
+  document.getElementById('cardsBg').style.display = 'none';
+  document.getElementById('cardsHint').style.display = 'none';
+  document.getElementById('cardsLanes').style.display = 'none';
+
+  if (earthCardsTimer) {
+    clearTimeout(earthCardsTimer);
+    earthCardsTimer = null;
+  }
+
+  animatedCardsInitialized = false;
+  hideModal();
+
+  ['laneTop', 'laneMiddle', 'laneBottom'].forEach(id => {
+    const element = document.getElementById(id);
+    if (element) element.innerHTML = '';
+  });
+}
+
+
+ 
+  </script>
+
+  <script>
+    /* ============================================
+       MINIMAL SOUND EFFECTS FOR PNGS
+    ============================================ */
+    
+    // Create audio elements dynamically
+    function createSoundElements() {
+      const sounds = {
+        'spirt1': 'The Spirits.mp3',
+        'crazy1': 'The Buried Ones.mp3',
+        'humans1': 'The Surface Humans.mp3',
+        'ussrgiant1': 'The USSR Giants.mp3',
+        'The Echo-Stalkers': 'The Echo-Stalkers.mp3',
+        'Bearers1': 'The Bearers.mp3',
+        'The Primordial Anchors1': 'The Primordial Anchors.mp3',
+        'Karmlate1': 'karmlt.mp3',
+        'lack1': 'Mid Earth\'s ocean.mp3'
+      };
+      
+      for (const [key, file] of Object.entries(sounds)) {
+        const audio = document.createElement('audio');
+        audio.id = `sound-${key}`;
+        audio.src = file;
+        audio.preload = 'auto';
+        document.body.appendChild(audio);
+      }
+    }
+    
+    // Call this when the page loads
+    window.addEventListener('load', createSoundElements);
+    
+    // Map PNG filenames to their sound IDs
+    const PNG_SOUND_MAP = {
+      'spirt1.png': 'sound-spirt1',
+      'crazy1.png': 'sound-crazy1',
+      'humans1.png': 'sound-humans1',
+      'ussrgiant1.png': 'sound-ussrgiant1',
+      'The Echo-Stalkers.png': 'sound-The Echo-Stalkers',
+      'Bearers1.png': 'sound-Bearers1',
+      'The Primordial Anchors1.png': 'sound-The Primordial Anchors1',
+      'Karmlate1.png': 'sound-Karmlate1',
+      'lack1.png': 'sound-lack1'
+    };
+    
+    let currentSound = null;
+    
+    function playPNGSound(pngFilename) {
+      // Stop any currently playing sound
+      if (currentSound) {
+        currentSound.pause();
+        currentSound.currentTime = 0;
+      }
+      
+      // Get the sound ID from the mapping
+      const soundId = PNG_SOUND_MAP[pngFilename];
+      if (!soundId) return;
+      
+      // Get the audio element
+      const soundElement = document.getElementById(soundId);
+      if (!soundElement) return;
+      
+      // Play the sound
+      soundElement.volume = 1.0; // 100% volume
+      soundElement.currentTime = 0;
+      soundElement.play().catch(e => console.log("Audio play failed:", e));
+      currentSound = soundElement;
+    }
+    
+    function stopCurrentSound() {
+      if (currentSound) {
+        currentSound.pause();
+        currentSound.currentTime = 0;
+        currentSound = null;
+      }
+    }
+
+    function safePlayAudio(el,{resetTime=true}={}) {
+      if(!el) return;
+      try{
+        if(resetTime) el.currentTime = 0;
+        el.play().catch(()=>{});
+      }catch(e){}
+    }
+
+    function isClickable(el){
+      if(!el) return false;
+      if(el.matches && el.matches('button,a,input[type="button"],input[type="submit"],[role="button"]')) return true;
+      if(el.matches && el.matches('.circle-button')) return true;
+      if(el.getAttribute && (el.getAttribute('onclick') || el.getAttribute('data-clickable')==='true')) return true;
+      if(el.classList && (el.classList.contains('card-wrap') || el.classList.contains('scroll-tape'))) return true;
+      const p = el.parentElement;
+      if(p && p.getAttribute && (p.getAttribute('onclick') || p.getAttribute('data-clickable')==='true')) return true;
+      if(p && p.classList && p.classList.contains('card-wrap')) return true;
+      return false;
+    }
+
+    const bg = document.getElementById('bgMusic');
+    function startBgMusic(){
+      if(!bg) return;
+      bg.volume = 0.105; // Reduced by 65% (from 0.3 to 0.105)
+      bg.loop = true;
+      if(bg.paused) safePlayAudio(bg,{resetTime:false});
+    }
+    window.addEventListener('load', startBgMusic);
+    document.addEventListener('pointerdown', startBgMusic, { once:false, capture:true });
+    document.addEventListener('keydown', startBgMusic, { once:false, capture:true });
+
+    document.addEventListener('click',(e)=>{
+      const t = e.target;
+      if(!isClickable(t)) return;
+      safePlayAudio(document.getElementById('clickSound'));
+    },true);
+
+    function resizeBg(){
+      const bgDiv = document.querySelector('.background-gif');
+      if(!bgDiv) return;
+      bgDiv.style.height = Math.max(document.body.scrollHeight, window.innerHeight) + 'px';
+    }
+    window.addEventListener('load',resizeBg);
+    window.addEventListener('resize',resizeBg);
+    window.addEventListener('scroll',resizeBg);
+
+    // prevent click-through on overlays
+    document.getElementById("mapDrawerOverlay").addEventListener("pointerdown", (e)=>{ e.preventDefault(); e.stopPropagation(); }, {passive:false});
+    document.getElementById("mapDrawer").addEventListener("pointerdown", (e)=>{ e.stopPropagation(); }, true);
+
+    const moonViewer = document.getElementById("moonViewer");
+    const landOverlay = document.getElementById("landOverlay");
+    const landOverlayImg = document.getElementById("landOverlayImg");
+
+    const detailOverlay = document.getElementById("detailOverlay");
+    const detailOverlayImg = document.getElementById("detailOverlayImg");
+
+    const whiteBoxHighlight = document.getElementById("whiteBoxHighlight");
+
+    // do NOT allow click-to-close (only back button)
+    earthViewer.addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); }, true);
+    moonViewer.addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); }, true);
+    landOverlay.addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); }, true);
+    detailOverlay.addEventListener("click",(e)=>{ e.preventDefault(); e.stopPropagation(); }, true);
+    // Also prevent click-to-close on animated cards modal
+    cardsModal.addEventListener("click",(e)=>{ 
+      if(e.target === cardsBackdrop) {
+        hideModal();
+      } else {
+        e.preventDefault(); e.stopPropagation(); 
+      }
+    }, true);
+
+    let __landTimer = null;
+    function cancelLandTimer(){
+      if(__landTimer){ clearTimeout(__landTimer); __landTimer = null; }
+    }
+
+    // Mapping of PNG files to their description IDs
+    const PNG_TO_DESC = {
+      'Karmlate1.png': 'karmlate-desc',
+      'spirt1.png': 'spirit-desc',
+      'humans1.png': 'human-desc',
+      'The Primordial Anchors1.png': 'primordial-desc',
+      'The Echo-Stalkers.png': 'echo-desc',
+      'Bearers1.png': 'bearer-desc',
+      'crazy1.png': 'crazy-desc',
+      'lack1.png': 'lack-desc',
+      'ussrgiant1.png': 'ussrgiant-desc'
+    };
+
+    // MODIFIED: openDetailOverlay now plays sound for lack1.png
+    function openDetailOverlay(src){
+      detailOverlayImg.src = src;
+      detailOverlay.classList.add("active");
+      detailOverlay.setAttribute("aria-hidden","false");
+      
+      // Play the corresponding sound
+      const filename = src.split('/').pop();
+      
+      // Special handling for lack1.png (Mid Earth's ocean)
+      if (filename === 'lack1.png') {
+        const oceanSound = document.getElementById('midEarthOceanSound');
+        if (oceanSound) {
+          // Stop any other sounds first
+          stopCurrentSound();
+          // Play the ocean sound
+          oceanSound.volume = 1.0;
+          oceanSound.currentTime = 0;
+          oceanSound.play().catch(e => console.log("Ocean sound play failed:", e));
+          currentSound = oceanSound;
+        }
+      } else {
+        playPNGSound(filename);
+      }
+      
+      // Hide all description boxes first
+      const allDescs = document.querySelectorAll('.png-description');
+      allDescs.forEach(desc => desc.style.display = 'none');
+      
+      // Show the appropriate description box
+      const descId = PNG_TO_DESC[filename];
+      if (descId) {
+        document.getElementById(descId).style.display = 'block';
+      }
+    }
+
+    // MODIFIED: closeDetailOverlay now stops all sounds including ocean sound
+    function closeDetailOverlay(){
+      detailOverlay.classList.remove("active");
+      detailOverlay.setAttribute("aria-hidden","true");
+      detailOverlayImg.src = "";
+      
+      // Stop all sounds when closing
+      stopCurrentSound();
+      
+      // Also stop the specific ocean sound if it's playing
+      const oceanSound = document.getElementById('midEarthOceanSound');
+      if (oceanSound) {
+        oceanSound.pause();
+        oceanSound.currentTime = 0;
+      }
+      
+      // Hide all description boxes
+      const allDescs = document.querySelectorAll('.png-description');
+      allDescs.forEach(desc => desc.style.display = 'none');
+    }
+
+    function openLandOverlay(src){
+      cancelLandTimer();
+      closeDetailOverlay(); // if detail open, reset
+      landOverlayImg.src = src;
+      landOverlay.classList.add("active");     // fade in (1s)
+      landOverlay.setAttribute("aria-hidden","false");
+      __setCurrentWhiteButtonForLand(src);     // IMPORTANT: enable white-box hover/click
+    }
+    
+    // MODIFIED: closeLandOverlay also stops sounds
+    function closeLandOverlay(){
+      cancelLandTimer();
+      closeDetailOverlay();
+      landOverlay.classList.remove("active");
+      landOverlay.classList.remove("hot");
+      landOverlay.classList.remove("canClick");
+      landOverlay.setAttribute("aria-hidden","true");
+      landOverlayImg.src = "";
+      whiteBoxHighlight.style.opacity = "0";
+      __currentWhite = null;
+      
+      // Stop all sounds when closing land overlay
+      stopCurrentSound();
+      const oceanSound = document.getElementById('midEarthOceanSound');
+      if (oceanSound) {
+        oceanSound.pause();
+        oceanSound.currentTime = 0;
+      }
+      
+      // Remove name label
+      const landOverlayContent = document.getElementById('landOverlayContent');
+      const existingNames = landOverlayContent.querySelectorAll('.white-box-name');
+      existingNames.forEach(name => name.remove());
+    }
+
+    // Earth opening and closing functions are already modified above
+    function openMoon(){
+      moonViewer.classList.add("active");
+      moonViewer.setAttribute("aria-hidden","false");
+    }
+    function closeMoon(){
+      moonViewer.classList.remove("active");
+      moonViewer.setAttribute("aria-hidden","true");
+    }
+
+    // MAP open/close
+    function openMap(){
+      closeLandOverlay();
+      document.body.classList.add('map-open');
+      document.body.classList.remove("zoomed");
+      const stage = document.getElementById("mapStage");
+      if(stage) stage.style.transform = "translate3d(0,0,0) scale(1)";
+      window.__zoomedIndex = -1;
+    }
+
+    // MODIFIED: closeMapToMain function also stops sounds
+    function closeMapToMain(){
+      closeLandOverlay();
+      document.body.classList.remove('map-open');
+      document.body.classList.remove('zoomed');
+      const stage = document.getElementById("mapStage");
+      if(stage) stage.style.transform = "translate3d(0,0,0) scale(1)";
+      window.__zoomedIndex = -1;
+      
+      // Stop all sounds when closing map
+      stopCurrentSound();
+      const oceanSound = document.getElementById('midEarthOceanSound');
+      if (oceanSound) {
+        oceanSound.pause();
+        oceanSound.currentTime = 0;
+      }
+    }
+  </script>
+
+  <script>
+    /* ======================================================
+       TOP-LEFT BACK BUTTON - ENTIRE AREA CLICKABLE
+       ====================================================== */
+       document.addEventListener("DOMContentLoaded", () => {
+  const mapToggleBtn = document.getElementById("mapToggleBtn");
+  if (!mapToggleBtn) return;
+
+  mapToggleBtn.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // If Earth fullscreen is open, back should close it
+    const earthViewerEl = document.getElementById("earthViewer");
+    if (earthViewerEl && earthViewerEl.classList.contains("active")) {
+      closeEarth(); // uses your FIRST (correct) closeEarth()
+      return;
+    }
+
+    // otherwise do nothing here (so you don't change other stuff)
+    // your existing back behavior for map/land/detail stays in your other code
+  }, true);
+});
+
+    document.getElementById("mapToggleBtn").addEventListener("pointerdown", (e)=>{
+      e.stopPropagation(); e.preventDefault();
+
+      // ONE STEP BACK ONLY (priority)
+      if(document.getElementById("detailOverlay").classList.contains("active")){
+        closeDetailOverlay();    // back to LAND overlay
+        return;
+      }
+      if(document.getElementById("landOverlay").classList.contains("active")){
+        closeLandOverlay();      // back to zoomed map
+        return;
+      }
+      if(document.getElementById("earthViewer").classList.contains("active")){
+        closeEarth();            // back to main
+        return;
+      }
+      if(document.getElementById("moonViewer").classList.contains("active")){
+        closeMoon();             // back to main
+        return;
+      }
+      if(document.body.classList.contains("zoomed")){
+        zoomOut();               // back to full map
+        return;
+      }
+      if(document.body.classList.contains("map-open")){
+        closeMapToMain();        // back to main
+        return;
+      }
+    }, { passive:false });
+
+    /* ======================================================
+       ALPHA HIT TEST (ONLY FILLED PIXELS CLICKABLE)
+       - hit test uses the IMAGE rect
+       ====================================================== */
+    const __alphaCache = new Map();
+
+    function __getMaskCanvas(imgEl){
+      const key = imgEl.src;
+      const cached = __alphaCache.get(key);
+      if(cached) return cached;
+
+      const c = document.createElement("canvas");
+      const ctx = c.getContext("2d", { willReadFrequently:true });
+
+      const w = imgEl.naturalWidth || 1;
+      const h = imgEl.naturalHeight || 1;
+      c.width = w; c.height = h;
+      ctx.clearRect(0,0,w,h);
+      try{ ctx.drawImage(imgEl, 0, 0); }catch(e){}
+
+      const obj = { c, ctx, w, h, ready: (imgEl.complete && w>1 && h>1) };
+      __alphaCache.set(key, obj);
+
+      imgEl.addEventListener("load", ()=>{
+        const ww = imgEl.naturalWidth || 1;
+        const hh = imgEl.naturalHeight || 1;
+        obj.c.width = ww; obj.c.height = hh;
+        obj.w = ww; obj.h = hh;
+        obj.ctx.clearRect(0,0,ww,hh);
+        try{ obj.ctx.drawImage(imgEl, 0, 0); }catch(e){}
+        obj.ready = true;
+      }, { once:false });
+
+      return obj;
+    }
+
+    function alphaHit(imgEl, clientX, clientY, threshold = 18){
+      const rect = imgEl.getBoundingClientRect();
+      const x = clientX - rect.left;
+      const y = clientY - rect.top;
+
+      if(x < 0 || y < 0 || x > rect.width || y > rect.height) return false;
+
+      const mask = __getMaskCanvas(imgEl);
+      if(!mask.ready) return false;
+
+      const px = Math.floor((x / rect.width) * mask.w);
+      const py = Math.floor((y / rect.height) * mask.h);
+
+      if(px < 0 || py < 0 || px >= mask.w || py >= mask.h) return false;
+
+      const a = mask.ctx.getImageData(px, py, 1, 1).data[3];
+      return a > threshold;
+    }
+
+    function bindAlphaHit(){
+      const targets = document.querySelectorAll('[data-alpha-hit="true"]');
+      targets.forEach(t=>{
+        t.addEventListener("pointerdown", (e)=>{
+          const img = t.querySelector("img");
+          if(!img) return;
+
+          if(!alphaHit(img, e.clientX, e.clientY, 18)){
+            e.stopPropagation();
+            e.preventDefault();
+            return;
+          }
+
+          const action = t.getAttribute("data-action");
+
+          if(action === "openMap"){
+            e.stopPropagation(); e.preventDefault();
+            openMap();
+          }else if(action === "openEarth"){
+            e.stopPropagation(); e.preventDefault();
+            openEarth(); // This now triggers animated cards
+          }else if(action === "openMoon"){
+            e.stopPropagation(); e.preventDefault();
+            openMoon();
+          }
+        }, { passive:false });
+      });
+    }
+    window.addEventListener("load", bindAlphaHit);
+  </script>
+
+  <script>
+    /* ===============================
+       HERO ORBIT MOTION (ALL 3 MOVE)
+    =============================== */
+    (function(){
+      const stage  = document.getElementById("heroOrbitStage");
+      const earthHit  = document.getElementById("heroEarthHit");
+      const moonHit = document.getElementById("heroMoonHit");
+      const portalHit = document.getElementById("heroPortalHit");
+      if(!stage || !earthHit || !moonHit || !portalHit) return;
+
+      const SPEED = 0.00016;
+      const ELLIPSE_Y = 0.75;
+      const BOB = 0.03;
+
+      const start = performance.now();
+
+      function tick(now){
+        const dt = now - start;
+        const rect = stage.getBoundingClientRect();
+
+        const R  = Math.min(rect.width, rect.height) * 0.30;
+        const RY = R * ELLIPSE_Y;
+
+        const a = dt * SPEED;
+
+        const a0 = a;
+        const a1 = a + (Math.PI * 2 / 3);
+        const a2 = a + (Math.PI * 4 / 3);
+
+        const bob = Math.sin(dt * 0.0012) * (Math.min(rect.width, rect.height) * BOB);
+
+        const ex = Math.cos(a0) * R;
+        const ey = Math.sin(a0) * RY;
+
+        const mx = Math.cos(a1) * R;
+        const my = Math.sin(a1) * RY;
+
+        const px = Math.cos(a2) * R;
+        const py = Math.sin(a2) * RY;
+
+        earthHit.style.transform  = `translate(calc(-50% + ${ex}px), calc(-50% + ${ey + bob}px))`;
+        moonHit.style.transform   = `translate(calc(-50% + ${mx}px), calc(-50% + ${my - bob}px))`;
+        portalHit.style.transform = `translate(calc(-50% + ${px}px), calc(-50% + ${py}px))`;
+
+        const items = [
+          { el: earthHit,  y: ey },
+          { el: moonHit,   y: my },
+          { el: portalHit, y: py }
+        ].sort((A,B)=>A.y - B.y);
+
+        items[0].el.style.zIndex = 1;
+        items[1].el.style.zIndex = 2;
+        items[2].el.style.zIndex = 3;
+
+        requestAnimationFrame(tick);
+      }
+
+      requestAnimationFrame(tick);
+    })();
+  </script>
+
+  <script>
+    /* ===============================
+       MAP hover + alpha hit + zoom
+       + AUTO OPEN LAND OVERLAY
+       - click land -> zoom
+       - after 1s -> open land overlay on top (fade-in 1s)
+       - no click-to-close anywhere, only top-left back
+    =============================== */
+    const mapDrawer = document.getElementById("mapDrawer");
+    const mapStage  = document.getElementById("mapStage");
+    const showEls = Array.from(document.querySelectorAll(".area-show"));
+    const glowEls = Array.from(document.querySelectorAll(".area-glow"));
+
+    // maping -> giant, maping1 -> karm, ...
+    const LAND_IMAGES = [
+      "giant.png",        // maping.png
+      "karm.png",         // maping1.png
+      "barid alive.png",  // maping2.png
+      "human.png",        // maping3.png
+      "monsters.png",     // maping4.png
+      "vamp.png",         // maping45.png
+      "drwaf.png",        // maping6.png
+      "spirits.png",      // maping7.png
+      "lack1.png"         // maping8.png (not used for white-box button)
+    ];
+
+    const MASK_FILES = [
+      "maping.png","maping1.png","maping2.png","maping3.png","maping4.png",
+      "maping45.png","maping6.png","maping7.png","maping8.png"
+    ];
+    const GLOW_FILES = [
+      "maping_glow.png","maping1_glow.png","maping2_glow.png","maping3_glow.png","maping4_glow.png",
+      "maping45_glow.png","maping6_glow.png","maping7_glow.png","maping8_glow.png"
+    ];
+
+    (function preloadAll(){
+      // preload map masks + glows + land overlay images + detail images
+      const DETAIL_IMAGES = [
+        "Karmlate1.png",
+        "ussrgiant1.png",
+        "crazy1.png",
+        "humans1.png",
+        "The Primordial Anchors1.png",
+        "The Echo-Stalkers.png",
+        "Bearers1.png",
+        "spirt1.png",
+        "lack1.png"
+      ];
+      [...MASK_FILES, ...GLOW_FILES, ...LAND_IMAGES, ...DETAIL_IMAGES].forEach(src => {
+        const im = new Image();
+        im.decoding = "async";
+        im.loading = "eager";
+        im.src = src;
+      });
+    })();
+
+    const ALPHA_THRESHOLD = 10;
+    const buffers = [];
+    let currentActive = -1;
+    window.__zoomedIndex = -1;
+
+    function setActiveIndex(idx){
+      if(document.body.classList.contains("zoomed")) return;
+      if(idx === currentActive) return;
+
+      if(currentActive >= 0){
+        showEls[currentActive] && showEls[currentActive].classList.remove("active");
+        glowEls[currentActive] && glowEls[currentActive].classList.remove("active");
+      }
+      currentActive = idx;
+
+      if(currentActive >= 0){
+        showEls[currentActive] && showEls[currentActive].classList.add("active");
+        glowEls[currentActive] && glowEls[currentActive].classList.add("active");
+      }
+    }
+
+    function mapStageToImagePixel(stageX, stageY, imgW, imgH){
+      const rect = mapDrawer.getBoundingClientRect();
+      const stageW = rect.width;
+      const stageH = rect.height;
+
+      const scale = Math.min(stageW / imgW, stageH / imgH);
+      const drawW = imgW * scale;
+      const drawH = imgH * scale;
+      const offsetX = (stageW - drawW) / 2;
+      const offsetY = (stageH - drawH) / 2;
+
+      if(stageX < offsetX || stageX > offsetX + drawW || stageY < offsetY || stageY > offsetY + drawH){
+        return null;
+      }
+
+      const xi = ((stageX - offsetX) / scale) | 0;
+      const yi = ((stageY - offsetY) / scale) | 0;
+      if(xi < 0 || yi < 0 || xi >= imgW || yi >= imgH) return null;
+
+      return { x: xi, y: yi };
+    }
+
+    function imagePixelToStagePoint(px, py, imgW, imgH){
+      const rect = mapDrawer.getBoundingClientRect();
+      const stageW = rect.width;
+      const stageH = rect.height;
+
+      const scale = Math.min(stageW / imgW, stageH / imgH);
+      const drawW = imgW * scale;
+      const drawH = imgH * scale;
+      const offsetX = (stageW - drawW) / 2;
+      const offsetY = (stageH - drawH) / 2;
+
+      return { x: offsetX + px * scale, y: offsetY + py * scale, scale, offsetX, offsetY, drawW, drawH };
+    }
+
+    function findHitIndex(stageX, stageY){
+      for(let i = buffers.length - 1; i >= 0; i--){
+        const b = buffers[i];
+        const p = mapStageToImagePixel(stageX, stageY, b.w, b.h);
+        if(!p) continue;
+        const idx = p.y * b.w + p.x;
+        if(b.mask[idx]) return i;
+      }
+      return -1;
+    }
+
+    let rafPending = false;
+    let lastMouse = { x:0, y:0 };
+
+    function onMove(e){
+      if(!document.body.classList.contains("map-open")) return;
+      if(document.body.classList.contains("zoomed")) return;
+
+      const rect = mapDrawer.getBoundingClientRect();
+      lastMouse.x = e.clientX - rect.left;
+      lastMouse.y = e.clientY - rect.top;
+
+      if(!rafPending){
+        rafPending = true;
+        requestAnimationFrame(() => {
+          rafPending = false;
+          const hit = findHitIndex(lastMouse.x, lastMouse.y);
+          setActiveIndex(hit);
+        });
+      }
+    }
+    function onLeave(){
+      if(document.body.classList.contains("zoomed")) return;
+      setActiveIndex(-1);
+    }
+    mapDrawer.addEventListener("mousemove", onMove, { passive:true });
+    mapDrawer.addEventListener("mouseleave", onLeave);
+
+    async function buildMasks(){
+      buffers.length = 0;
+
+      const loadOne = (src) => new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.decoding = "async";
+        img.loading = "eager";
+        img.src = src;
+
+        img.onload = () => {
+          const w = img.naturalWidth;
+          const h = img.naturalHeight;
+
+          const c = document.createElement("canvas");
+          c.width = w;
+          c.height = h;
+
+          const ctx = c.getContext("2d", { willReadFrequently:true });
+          ctx.drawImage(img, 0, 0);
+
+          const data = ctx.getImageData(0, 0, w, h).data;
+          const mask = new Uint8Array(w * h);
+
+          let minx = w, miny = h, maxx = 0, maxy = 0;
+          let any = false;
+
+          for(let p = 0, m = 0; p < data.length; p += 4, m++){
+            const on = (data[p + 3] > ALPHA_THRESHOLD) ? 1 : 0;
+            mask[m] = on;
+            if(on){
+              any = true;
+              const y = (m / w) | 0;
+              const x = m - y*w;
+              if(x < minx) minx = x;
+              if(y < miny) miny = y;
+              if(x > maxx) maxx = x;
+              if(y > maxy) maxy = y;
+            }
+          }
+
+          if(!any){
+            minx = 0; miny = 0; maxx = w-1; maxy = h-1;
+          }
+
+          const cx = (minx + maxx) / 2;
+          const cy = (miny + maxy) / 2;
+
+          buffers.push({ w, h, mask, bb:{ minx, miny, maxx, maxy, cx, cy } });
+          resolve();
+        };
+
+        img.onerror = () => reject(new Error("Failed to load: " + src));
+      });
+
+      for(const f of MASK_FILES){
+        await loadOne(f);
+      }
+      setActiveIndex(-1);
+    }
+
+    buildMasks().catch(err=>{
+      console.error(err);
+      alert("Put HTML + ezgif-6110...gif + all maping*.png + all *_glow.png + land PNGs in the same folder.");
+    });
+
+    // MODIFIED: zoomOut function also stops sounds
+    function zoomOut(){
+      closeLandOverlay(); // if overlay open, close it first (back button does this too)
+      document.body.classList.remove("zoomed");
+      mapStage.style.transform = "translate3d(0,0,0) scale(1)";
+      window.__zoomedIndex = -1;
+      
+      // Stop all sounds when zooming out
+      stopCurrentSound();
+      const oceanSound = document.getElementById('midEarthOceanSound');
+      if (oceanSound) {
+        oceanSound.pause();
+        oceanSound.currentTime = 0;
+      }
+    }
+    window.zoomOut = zoomOut; // used by back button
+
+    const TARGET_FILL = 0.86;
+    const MIN_SCALE = 1.6;
+    const MAX_SCALE = 8.5;
+    const SMALL_LAND_BOOST = 1.15;
+
+    function computeLandScale(b){
+      const rect = mapDrawer.getBoundingClientRect();
+      const vw = rect.width;
+      const vh = rect.height;
+
+      const bwImg = Math.max(2, (b.bb.maxx - b.bb.minx));
+      const bhImg = Math.max(2, (b.bb.maxy - b.bb.miny));
+
+      const s = imagePixelToStagePoint(0, 0, b.w, b.h).scale;
+      const bwStage = bwImg * s;
+      const bhStage = bhImg * s;
+
+      let fit = Math.min((vw * TARGET_FILL) / bwStage, (vh * TARGET_FILL) / bhStage);
+
+      const area = bwStage * bhStage;
+      const viewportArea = vw * vh;
+      const rel = Math.max(0.02, Math.min(1, area / viewportArea));
+      const boost = 1 + (1 - rel) * (SMALL_LAND_BOOST - 1);
+      fit *= boost;
+
+      if(fit < MIN_SCALE) fit = MIN_SCALE;
+      if(fit > MAX_SCALE) fit = MAX_SCALE;
+
+      return fit;
+    }
+
+    function zoomToLand(idx){
+      const b = buffers[idx];
+      if(!b) return;
+
+      closeLandOverlay();   // ensure clean before re-zoom
+      cancelLandTimer();
+
+      const centerStage = imagePixelToStagePoint(b.bb.cx, b.bb.cy, b.w, b.h);
+      const rect = mapDrawer.getBoundingClientRect();
+      const viewportCX = rect.width / 2;
+      const viewportCY = rect.height / 2;
+
+      const scale = computeLandScale(b);
+      const tx = (viewportCX - centerStage.x) * scale;
+      const ty = (viewportCY - centerStage.y) * scale;
+
+      mapStage.style.transform = `translate3d(${tx}px, ${ty}px, 0) scale(${scale})`;
+      document.body.classList.add("zoomed");
+      window.__zoomedIndex = idx;
+
+      // AFTER 1s: open the correct land image ON TOP of the zoomed map
+      // SPECIAL CASE for idx 8 (lack1.png) - show PNG and text immediately
+      __landTimer = setTimeout(()=>{
+        const src = LAND_IMAGES[idx];
+        if(src){
+          if(idx === 8){ // maping8.png -> lack1.png
+            // For lack1.png, we want to show the PNG AND text immediately
+            openDetailOverlay("lack1.png");
+          }else{
+            openLandOverlay(src); // fade in 1s
+          }
+        }
+      }, 1000);
+    }
+
+    // CLICK MAP:
+    // - click on a land: zoom and auto-open overlay after 1s
+    mapDrawer.addEventListener("click",(e)=>{
+      if(!document.body.classList.contains("map-open")) return;
+
+      // if land overlay is active, do nothing (close ONLY with back)
+      if(document.getElementById("landOverlay").classList.contains("active")) return;
+      // if detail overlay is active, do nothing (close ONLY with back)
+      if(document.getElementById("detailOverlay").classList.contains("active")) return;
+
+      const rect = mapDrawer.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+
+      // if already zoomed and no overlay yet, do nothing (wait auto open)
+      if(document.body.classList.contains("zoomed")) return;
+
+      const hit = findHitIndex(sx, sy);
+      if(hit >= 0){
+        if(hit === 8){ // Special case for maping8.png (lack1.png)
+          // For lack1.png, we want to show PNG AND text immediately
+          zoomToLand(hit); // This will trigger the timer that opens lack1.png with text
+        }else{
+          zoomToLand(hit); // Normal behavior for other lands
+        }
+      }
+    }, true);
+  </script>
+
+  <script>
+    /* ======================================================
+       WHITE-BOX SELECT AREA (karm/giant/barid alive/human/monsters/vamp/drwaf/spirits)
+       - detects the WHITE BOX pixels inside each land image
+       - hover (no click) => bump + light + show name
+       - click on white box => open detail overlay image
+       ====================================================== */
+
+    // Base land -> detail image mapping (ONLY these 8)
+    const WHITE_BUTTON_SPECS = [
+      { land:"karm.png",         detail:"Karmlate1.png", nameKey: "karm_name" },
+      { land:"giant.png",        detail:"ussrgiant1.png", nameKey: "giant_name" },
+      { land:"barid alive.png",  detail:"crazy1.png", nameKey: "barid_alive_name" },
+      { land:"human.png",        detail:"humans1.png", nameKey: "human_name" },
+      { land:"monsters.png",     detail:"The Primordial Anchors1.png", nameKey: "monsters_name" },
+      { land:"vamp.png",         detail:"The Echo-Stalkers.png", nameKey: "vamp_name" },
+      { land:"drwaf.png",         detail:"Bearers1.png", nameKey: "drwaf_name" },
+      { land:"spirits.png",      detail:"spirt1.png", nameKey: "spirits_name" }
+    ];
+
+    const __whiteMasks = new Map(); // land filename -> {w,h,mask,bb:{minx,miny,maxx,maxy}}
+    let __currentWhite = null;      // current {land,detail,maskObj}
+    let __whiteReady = false;
+
+    function __basename(path){
+      if(!path) return "";
+      const q = path.split("?")[0];
+      const parts = q.split("/");
+      return parts[parts.length - 1];
+    }
+
+    // white pixel rule (tuned for "white box" areas):
+    // - alpha > 10
+    // - rgb all high
+    // - low color variation
+    function __isWhitePixel(r,g,b,a){
+      if(a < 10) return false;
+      const hi = (r > 210 && g > 210 && b > 210);
+      if(!hi) return false;
+      const mx = Math.max(r,g,b);
+      const mn = Math.min(r,g,b);
+      return (mx - mn) < 45;
+    }
+
+    function __buildWhiteMaskForLand(landFile){
+      if(__whiteMasks.has(landFile)) return Promise.resolve(__whiteMasks.get(landFile));
+
+      return new Promise((resolve, reject)=>{
+        const img = new Image();
+        img.decoding = "async";
+        img.loading = "eager";
+        img.src = landFile;
+
+        img.onload = () => {
+          const w = img.naturalWidth || 1;
+          const h = img.naturalHeight || 1;
+
+          const c = document.createElement("canvas");
+          c.width = w;
+          c.height = h;
+          const ctx = c.getContext("2d", { willReadFrequently:true });
+          ctx.drawImage(img, 0, 0);
+
+          const data = ctx.getImageData(0,0,w,h).data;
+          const mask = new Uint8Array(w*h);
+
+          let minx = w, miny = h, maxx = 0, maxy = 0;
+          let any = false;
+
+          for(let p=0, i=0; p<data.length; p+=4, i++){
+            const r=data[p], g=data[p+1], b=data[p+2], a=data[p+3];
+            const on = __isWhitePixel(r,g,b,a) ? 1 : 0;
+            mask[i]=on;
+            if(on){
+              any = true;
+              const y = (i / w) | 0;
+              const x = i - y*w;
+              if(x < minx) minx = x;
+              if(y < miny) miny = y;
+              if(x < maxx) maxx = x;
+              if(y < maxy) maxy = y;
+            }
+          }
+
+          if(!any){
+            // if it fails, keep empty bbox so nothing clickable
+            minx = 0; miny = 0; maxx = 0; maxy = 0;
+          }
+
+          const obj = { w,h,mask, bb:{minx,miny,maxx,maxy}, any };
+          __whiteMasks.set(landFile, obj);
+          resolve(obj);
+        };
+
+        img.onerror = () => reject(new Error("Failed to load white-box land: " + landFile));
+      });
+    }
+
+    function __prebuildAllWhiteMasks(){
+      const jobs = WHITE_BUTTON_SPECS.map(s => __buildWhiteMaskForLand(s.land).catch(()=>null));
+      return Promise.all(jobs).then(()=>{ __whiteReady = true; });
+    }
+
+    // build once on load
+    window.addEventListener("load", ()=>{
+      __prebuildAllWhiteMasks();
+    });
+
+    function __setCurrentWhiteButtonForLand(landSrc){
+      const landFile = __basename(landSrc);
+      const spec = WHITE_BUTTON_SPECS.find(s => s.land === landFile);
+      __currentWhite = null;
+      landOverlay.classList.remove("hot");
+      landOverlay.classList.remove("canClick");
+      whiteBoxHighlight.style.opacity = "0";
+
+      if(!spec) return;
+
+      const maskObj = __whiteMasks.get(spec.land);
+      if(maskObj){
+        __currentWhite = { land: spec.land, detail: spec.detail, nameKey: spec.nameKey, maskObj };
+        __positionWhiteHighlight(); // initial
+        // Update name labels for this land
+        updateWhiteBoxNamesForCurrentLand();
+      }else{
+        // if not built yet, build now
+        __buildWhiteMaskForLand(spec.land).then(m=>{
+          __currentWhite = { land: spec.land, detail: spec.detail, nameKey: spec.nameKey, maskObj: m };
+          __positionWhiteHighlight();
+          updateWhiteBoxNamesForCurrentLand();
+        }).catch(()=>{});
+      }
+    }
+
+    function updateWhiteBoxNamesForCurrentLand() {
+      if (!__currentWhite) return;
+      
+      const landOverlayContent = document.getElementById('landOverlayContent');
+      const existingNames = landOverlayContent.querySelectorAll('.white-box-name');
+      existingNames.forEach(name => name.remove());
+      
+      // Create name label for the current white box area
+      if (!__currentWhite.maskObj || !__currentWhite.maskObj.any) return;
+      
+      const name = i18next.t(__currentWhite.nameKey);
+      const nameDiv = document.createElement('div');
+      nameDiv.className = 'white-box-name';
+      nameDiv.innerHTML = name; // Use innerHTML to preserve span tags
+      nameDiv.id = `white-box-name-${__currentWhite.nameKey}`;
+      
+      // Position at fixed location: 28% from top, 15% from right
+      nameDiv.style.top = '28%';
+      nameDiv.style.right = '15%';
+      
+      landOverlayContent.appendChild(nameDiv);
+    }
+
+    function __getContainRectForOverlay(imgW, imgH){
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const scale = Math.min(vw / imgW, vh / imgH);
+      const drawW = imgW * scale;
+      const drawH = imgH * scale;
+      const offsetX = (vw - drawW) / 2;
+      const offsetY = (vh - drawH) / 2;
+      return { scale, drawW, drawH, offsetX, offsetY, vw, vh };
+    }
+
+    function __clientToImagePixel(clientX, clientY, maskObj){
+      const { w, h } = maskObj;
+      const rect = __getContainRectForOverlay(w, h);
+      const x = clientX - rect.offsetX;
+      const y = clientY - rect.offsetY;
+
+      if(x < 0 || y < 0 || x > rect.drawW || y > rect.drawH) return null;
+
+      const px = Math.floor((x / rect.drawW) * w);
+      const py = Math.floor((y / rect.drawH) * h);
+
+      if(px < 0 || py < 0 || px >= w || py >= h) return null;
+      return { px, py, rect };
+    }
+
+    function __positionWhiteHighlight(){
+      if(!__currentWhite || !__currentWhite.maskObj || !__currentWhite.maskObj.any) return;
+
+      const b = __currentWhite.maskObj.bb;
+      const rect = __getContainRectForOverlay(__currentWhite.maskObj.w, __currentWhite.maskObj.h);
+
+      const left   = rect.offsetX + (b.minx / __currentWhite.maskObj.w) * rect.drawW;
+      const top    = rect.offsetY + (b.miny / __currentWhite.maskObj.h) * rect.drawH;
+      const right  = rect.offsetX + ((b.maxx+1) / __currentWhite.maskObj.w) * rect.drawW;
+      const bottom = rect.offsetY + ((b.maxy+1) / __currentWhite.maskObj.h) * rect.drawH;
+
+      const w = Math.max(0, right - left);
+      const h = Math.max(0, bottom - top);
+
+      whiteBoxHighlight.style.left = left + "px";
+      whiteBoxHighlight.style.top = top + "px";
+      whiteBoxHighlight.style.width = w + "px";
+      whiteBoxHighlight.style.height = h + "px";
+    }
+
+    // keep highlight aligned on resize
+    window.addEventListener("resize", ()=>{
+      __positionWhiteHighlight();
+    });
+
+    // Hover / Select (no click): bump + light only when pointer over WHITE pixels
+    landOverlay.addEventListener("pointermove", (e)=>{
+      if(!landOverlay.classList.contains("active")) return;
+      if(!__currentWhite || !__currentWhite.maskObj || !__currentWhite.maskObj.any) {
+        landOverlay.classList.remove("hot");
+        landOverlay.classList.remove("canClick");
+        return;
+      }
+
+      const p = __clientToImagePixel(e.clientX, e.clientY, __currentWhite.maskObj);
+      if(!p){
+        landOverlay.classList.remove("hot");
+        landOverlay.classList.remove("canClick");
+        return;
+      }
+
+      const idx = p.py * __currentWhite.maskObj.w + p.px;
+      const on = __currentWhite.maskObj.mask[idx] === 1;
+
+      if(on){
+        landOverlay.classList.add("hot");
+        landOverlay.classList.add("canClick");
+        __positionWhiteHighlight();
+      }else{
+        landOverlay.classList.remove("hot");
+        landOverlay.classList.remove("canClick");
+      }
+    }, { passive:true });
+
+    landOverlay.addEventListener("pointerleave", ()=>{
+      landOverlay.classList.remove("hot");
+      landOverlay.classList.remove("canClick");
+    });
+
+    // Click on WHITE pixels only => show detail image
+    landOverlay.addEventListener("pointerdown", (e)=>{
+      if(!landOverlay.classList.contains("active")) return;
+      // if detail already open, block everything (back button closes)
+      if(detailOverlay.classList.contains("active")) {
+        e.preventDefault(); e.stopPropagation();
+        return;
+      }
+      if(!__currentWhite || !__currentWhite.maskObj || !__currentWhite.maskObj.any) {
+        e.preventDefault(); e.stopPropagation();
+        return;
+      }
+
+      const p = __clientToImagePixel(e.clientX, e.clientY, __currentWhite.maskObj);
+      if(!p){
+        e.preventDefault(); e.stopPropagation();
+        return;
+      }
+
+      const idx = p.py * __currentWhite.maskObj.w + p.px;
+      const on = __currentWhite.maskObj.mask[idx] === 1;
+
+      if(on){
+        e.preventDefault(); e.stopPropagation();
+        openDetailOverlay(__currentWhite.detail); // fade in 1s (CSS)
+        return;
+      }
+
+      // not on white area => do nothing (no close)
+      e.preventDefault(); e.stopPropagation();
+    }, true);
+  </script>
+
+  <script>
+    /* ======================================================
+       3D CARD CREATOR FUNCTIONALITY
+       ====================================================== */
+    
+    let frontImage = null;
+    let backImage = null;
+    
+    function handleFrontUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        frontImage = e.target.result;
+        const frontPreview = document.getElementById('frontPreview');
+        const frontText = document.getElementById('frontText');
+        
+        frontPreview.src = frontImage;
+        frontPreview.style.display = 'block';
+        frontText.style.display = 'none';
+        
+        updateCardPreview();
+        updateSaveButton();
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function handleBackUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        backImage = e.target.result;
+        const backPreview = document.getElementById('backPreview');
+        const backText = document.getElementById('backText');
+        
+        backPreview.src = backImage;
+        backPreview.style.display = 'block';
+        backText.style.display = 'none';
+        
+        updateCardPreview();
+        updateSaveButton();
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function updateCardPreview() {
+      const cardFront = document.getElementById('cardFront');
+      const cardBack = document.getElementById('cardBack');
+      const cardFrontText = document.getElementById('cardFrontText');
+      const cardBackText = document.getElementById('cardBackText');
+      
+      // Clear previous content
+      cardFront.innerHTML = '';
+      cardBack.innerHTML = '';
+      
+      // Add text elements back
+      cardFront.appendChild(cardFrontText);
+      cardBack.appendChild(cardBackText);
+      
+      if (frontImage) {
+        const frontImg = document.createElement('img');
+        frontImg.src = frontImage;
+        frontImg.alt = i18next.t('card_front_text');
+        cardFront.appendChild(frontImg);
+        cardFrontText.style.display = 'none';
+      } else {
+        cardFrontText.style.display = 'block';
+      }
+      
+      if (backImage) {
+        const backImg = document.createElement('img');
+        backImg.src = backImage;
+        backImg.alt = i18next.t('card_back_text');
+        cardBack.appendChild(backImg);
+        cardBackText.style.display = 'none';
+      } else {
+        cardBackText.style.display = 'block';
+      }
+      
+      // Add 3D hover effect to preview card
+      add3DHoverEffect();
+    }
+    
+    function add3DHoverEffect() {
+      const previewCardWrap = document.getElementById('previewCardWrap');
+      const previewCard = document.getElementById('previewCard');
+      
+      previewCardWrap.addEventListener('mousemove', (e) => {
+        if (!previewCard.classList.contains('flipped')) {
+          const rect = previewCardWrap.getBoundingClientRect();
+          const x = e.clientX - rect.left;
+          const y = e.clientY - rect.top;
+          
+          const centerX = rect.width / 2;
+          const centerY = rect.height / 2;
+          
+          const rotateY = ((x - centerX) / centerX) * 10; // Max 10 degrees
+          const rotateX = ((centerY - y) / centerY) * 10; // Max 10 degrees
+          
+          previewCard.style.transform = `rotateY(${rotateY}deg) rotateX(${rotateX}deg)`;
+        }
+      });
+      
+      previewCardWrap.addEventListener('mouseleave', () => {
+        if (!previewCard.classList.contains('flipped')) {
+          previewCard.style.transform = 'rotateY(0deg) rotateX(0deg)';
+        }
+      });
+    }
+    
+    function togglePreviewCard() {
+      const previewCard = document.getElementById('previewCard');
+      const flipBtn = document.getElementById('flipBtn');
+      
+      previewCard.classList.toggle('flipped');
+      
+      if (previewCard.classList.contains('flipped')) {
+        flipBtn.textContent = i18next.t('flip_btn') === 'Flip Card' ? 'Show Front' : 
+                              i18next.t('flip_btn') === 'قلب البطاقة' ? 'إظهار الوجه' :
+                              i18next.t('flip_btn') === 'カードを裏返す' ? '表を表示' :
+                              i18next.t('flip_btn') === 'Voltear Tarjeta' ? 'Mostrar Frente' :
+                              i18next.t('flip_btn') === '翻转卡片' ? '显示正面' : 'Show Front';
+        previewCard.style.transform = 'rotateY(180deg)';
+      } else {
+        flipBtn.textContent = i18next.t('flip_btn');
+        previewCard.style.transform = 'rotateY(0deg) rotateX(0deg)';
+      }
+      
+      // Play click sound
+      safePlayAudio(document.getElementById('clickSound'));
+    }
+    
+    function resetCardCreator() {
+      frontImage = null;
+      backImage = null;
+      
+      // Reset front preview
+      const frontPreview = document.getElementById('frontPreview');
+      const frontText = document.getElementById('frontText');
+      frontPreview.src = '';
+      frontPreview.style.display = 'none';
+      frontText.style.display = 'block';
+      
+      // Reset back preview
+      const backPreview = document.getElementById('backPreview');
+      const backText = document.getElementById('backText');
+      backPreview.src = '';
+      backPreview.style.display = 'none';
+      backText.style.display = 'block';
+      
+      // Reset file inputs
+      document.getElementById('frontInput').value = '';
+      document.getElementById('backInput').value = '';
+      
+      // Reset card preview
+      updateCardPreview();
+      
+      // Reset flip state
+      const previewCard = document.getElementById('previewCard');
+      const flipBtn = document.getElementById('flipBtn');
+      previewCard.classList.remove('flipped');
+      flipBtn.textContent = i18next.t('flip_btn');
+      previewCard.style.transform = 'rotateY(0deg) rotateX(0deg)';
+      
+      // Disable save button
+      updateSaveButton();
+      
+      // Play click sound
+      safePlayAudio(document.getElementById('clickSound'));
+    }
+    
+    function updateSaveButton() {
+      const saveBtn = document.getElementById('saveBtn');
+      if (frontImage && backImage) {
+        saveBtn.disabled = false;
+        saveBtn.textContent = i18next.t('save_btn');
+      } else {
+        saveBtn.disabled = true;
+        saveBtn.textContent = i18next.t('save_btn_disabled');
+      }
+    }
+    
+    function saveCard() {
+      if (!frontImage || !backImage) {
+        alert(i18next.t('save_error'));
+        return;
+      }
+      
+      // In a real application, you would save the card to a server or database
+      // For this demo, we'll just show a success message
+      alert(i18next.t('save_success'));
+      
+      // Play click sound
+      safePlayAudio(document.getElementById('clickSound'));
+    }
+    
+    // Initialize the card creator when the page loads
+    window.addEventListener('load', function() {
+      updateCardPreview();
+      updateSaveButton();
+      add3DHoverEffect();
+    });
+  </script>
+  <script>
+  const WEEK_GIFS = [
+    "saturday.gif",
+    "sunday.gif",
+    "monday.gif",
+    "tuesday.gif",
+    "wednesday.gif",
+    "thursday.gif",
+    "friday.gif"
+  ];
+
+  function getTodayIndex(){
+    // JS: 0=Sunday ... 6=Saturday
+    const jsDay = new Date().getDay();
+    // convert -> 0=Saturday ... 6=Friday
+    const map = {6:0, 0:1, 1:2, 2:3, 3:4, 4:5, 5:6};
+    return map[jsDay];
+  }
+
+  function renderWeekGifs(){
+    const strip = document.getElementById("weekGifsStrip");
+    if(!strip) return;
+
+    strip.innerHTML = "";
+
+    const midIndex = getTodayIndex();
+
+    // order will be: 3 left + middle + 3 right
+    const order = [];
+    for(let i=-3; i<=3; i++){
+      let idx = (midIndex + i) % 7;
+      if(idx < 0) idx += 7;
+      order.push({ idx, offset: i });
+    }
+
+    order.forEach(item=>{
+      const img = document.createElement("img");
+      img.className = "week-gif";
+      img.src = item.idx >= 0 ? WEEK_GIFS[item.idx] : "";
+      img.alt = WEEK_GIFS[item.idx].replace(".gif","");
+
+      // middle
+      if(item.offset === 0){
+        img.classList.add("mid");
+      }
+
+      // fade rules
+      const abs = Math.abs(item.offset);
+      if(abs === 1) img.classList.add("fade-1");
+      if(abs === 2) img.classList.add("fade-2");
+      if(abs === 3) img.classList.add("fade-3");
+
+      strip.appendChild(img);
+    });
+  }
+
+  document.addEventListener("DOMContentLoaded", renderWeekGifs);
+</script>
+<!-- ✅ YOUR PAGE CONTENT HERE -->
+
+<!-- ✅ Earth Zoom Viewer (PUT HERE) -->
+<div id="earthViewer">
+  <video id="earthZoom" autoplay muted loop playsinline>
+    <source src="ezgif-6110ebd4b603cb5e.mp4" type="video/mp4">
+  </video>
+</div>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const el = document.getElementById("earth_day_night_10s");
+  if(!el) return;
+
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // put what you want to happen here:
+    console.log("earth_day_night_10s clicked");
+  });
+});
+</script>
+
+</body>
+</html>
